@@ -1,0 +1,46 @@
+[mainConfig]
+appName = "GopherAI"
+host = "0.0.0.0"
+port = 9090
+
+[emailConfig]
+authcode = "njzrsyvaxuqidfhf"
+email = "2942575718@qq.com"
+
+[redisConfig]
+host = "redis"
+port = 6379
+password = ""
+db = 0
+
+[mysqlConfig]
+host = "mysql"
+port = 3306
+user = "root"
+password = "123456"
+databaseName = "GopherAI"
+charset =  "utf8mb4"
+
+[jwtConfig]
+ expire_duration= 8760
+ issuer= "cyrus"
+ subject= "GopherAI"
+ key= "GopherAI-v1"
+
+ [rabbitmqConfig]
+  host= "rabbitmq"
+  port= 5672
+  username= "root"
+  password= "123456"
+  vhost= "/"
+
+ [ragModelConfig]
+  embeddingModel= "text-embedding-v4"
+  chatModelName="qwen-turbo"
+  docDir = "./docs"
+  baseUrl="https://dashscope.aliyuncs.com/compatible-mode/v1"
+  dimension=1024
+
+  [voiceServiceConfig]
+  voiceServiceApiKey = "zYZFmdxuHJYDYEAjHrDBERaT"
+  voiceServiceSecretKey ="egO0F2IrgnTfatm5ThBrxtxsYOL6A7XT"

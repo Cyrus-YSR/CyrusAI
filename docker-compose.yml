@@ -1,0 +1,102 @@
+services:
+  backend:
+    # 使用官方 Go 镜像进行开发，避免每次都需要构建
+    image: golang:1.25
+    container_name: gopherai-backend
+    ports:
+      - "9090:9090"
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+      - mcp-server
+    volumes:
+      - ./:/app
+      - ./config:/app/config
+      - ./models:/root/models
+      - ./imagenet_classes.txt:/root/imagenet_classes.txt
+      - ./libs/libonnxruntime.so:/usr/lib/libonnxruntime.so
+    working_dir: /app
+    # 启动时下载依赖并直接运行源代码
+    command: sh -c "ln -sf /usr/lib/libonnxruntime.so /usr/lib/onnxruntime.so && go mod tidy && go run main.go"
+    environment:
+      - OPENAI_API_KEY=sk-38b19adf8f0a4b3295c6c6689064a000
+      - OPENAI_MODEL_NAME=qwen-plus
+      - OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+      - ORT_DYLIB_PATH=/usr/lib/libonnxruntime.so
+      - CGO_ENABLED=1
+      - IS_DOCKER=true
+    networks:
+      - gopherai-net
+
+  frontend:
+    # 使用 Node 镜像进行开发，支持热重载
+    image: node:18-alpine
+    container_name: gopherai-frontend
+    ports:
+      # 映射 Vue 开发服务器默认端口 8080
+      - "8081:8080"
+    depends_on:
+      - backend
+    volumes:
+      # 挂载前端源码目录
+      - ./vue-frontend:/app
+    working_dir: /app
+    # 安装依赖并启动开发服务器
+    command: sh -c "npm install && npm run serve"
+    environment:
+      - IS_DOCKER=true
+    networks:
+      - gopherai-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: gopherai-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=GopherAI
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - gopherai-net
+
+  redis:
+    image: redis/redis-stack-server:latest
+    container_name: gopherai-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - gopherai-net
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: gopherai-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=123456
+      - RABBITMQ_DEFAULT_VHOST=/
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - gopherai-net
+
+  mcp-server:
+    image: golang:1.25
+    container_name: gopherai-mcp-server
+    volumes:
+      - ./:/app
+    working_dir: /app
+    command: sh -c "cd common/mcp && go mod tidy && go run . --mode server --http-addr :8081"
+    ports:
+      - "8082:8081"
+    networks:
+      - gopherai-net
+
+networks:
+  gopherai-net:
+
+volumes:
+  mysql-data:

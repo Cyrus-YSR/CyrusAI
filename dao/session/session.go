@@ -1,0 +1,36 @@
+package session
+
+import (
+	"GopherAI/common/mysql"
+	"GopherAI/model"
+)
+
+func GetSessionsByUserName(UserName int64) ([]model.Session, error) {
+	var sessions []model.Session
+	err := mysql.DB.Where("user_name = ?", UserName).Find(&sessions).Error
+	return sessions, err
+}
+
+func CreateSession(session *model.Session) (*model.Session, error) {
+	err := mysql.DB.Create(session).Error
+	return session, err
+}
+
+func GetSessionByID(sessionID string) (*model.Session, error) {
+	var session model.Session
+	err := mysql.DB.Where("id = ?", sessionID).First(&session).Error
+	return &session, err
+}
+
+func GetSessionsByIDs(sessionIDs []string) ([]model.Session, error) {
+	var sessions []model.Session
+	if len(sessionIDs) == 0 {
+		return sessions, nil
+	}
+	err := mysql.DB.Where("id IN ?", sessionIDs).Find(&sessions).Error
+	return sessions, err
+}
+
+func DeleteSessionByID(sessionID string) error {
+	return mysql.DB.Where("id = ?", sessionID).Delete(&model.Session{}).Error
+}
