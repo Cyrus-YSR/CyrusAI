@@ -1,6 +1,6 @@
-# GopherAI-v2: 全栈 AI 应用服务平台
+# CyrusAI: 全栈 AI 应用服务平台
 
-GopherAI-v2 是一个基于 Go 语言构建的现代化 AI 应用平台，集成了大模型对话、图像识别与分析、文件管理等功能。项目采用前后端分离架构，后端基于 Gin 框架和 CloudWeGo/Eino 生态，前端使用 Vue.js 3。
+CyrusAI 是一个基于 Go 语言构建的现代化 AI 应用平台，集成了大模型对话、图像识别与分析、文件管理等功能。项目采用前后端分离架构，后端基于 Gin 框架和 CloudWeGo/Eino 生态，前端使用 Vue.js 3。
 
 > ⚠️ **重要提示 / Important Note**
 >
@@ -118,8 +118,8 @@ docker-compose up -d
 ## 📂 目录结构 (Project Structure)
 
 ```
-GopherAI-v2/
-GopherAI-v2/
+CyrusAI/
+CyrusAI/
 ├── common/             # 公共组件 (AI模型, 图像识别, 消息队列等)
 ├── config/             # 配置文件
 ├── controller/         # 控制器层 (HTTP 接口处理)
