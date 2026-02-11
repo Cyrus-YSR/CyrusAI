@@ -21,7 +21,7 @@ func Auth() gin.HandlerFunc {
 		if authHeader != "" && strings.HasPrefix(authHeader, "Bearer ") {
 			token = strings.TrimPrefix(authHeader, "Bearer ")
 		} else {
-			// 兼容 URL 参数�?token
+			// 兼容 URL 参数中的token
 			token = c.Query("token")
 		}
 

@@ -53,11 +53,11 @@ func CheckCaptchaForEmail(email, userInput string) (bool, error) {
 
 	if strings.EqualFold(storedCaptcha, userInput) {
 
-		// 验证成功后删�?key
+		// 验证成功后删除该 key
 		if err := Rdb.Del(ctx, key).Err(); err != nil {
-
+			return false, err
 		} else {
-
+			fmt.Println("验证码验证成功，删除 Redis 中的验证码 key")
 		}
 		return true, nil
 	}
@@ -65,20 +65,20 @@ func CheckCaptchaForEmail(email, userInput string) (bool, error) {
 	return false, nil
 }
 
-// InitRedisIndex 初始�?Redis 索引，支持按文件名区�?
+// InitRedisIndex 初始化 Redis 索引，支持按文件名区分索引
 func InitRedisIndex(ctx context.Context, filename string, dimension int) error {
 	indexName := GenerateIndexName(filename)
 
-	// 检查索引是否存�?
+	// 检查索引是否存在
 	_, err := Rdb.Do(ctx, "FT.INFO", indexName).Result()
 	if err == nil {
 		fmt.Println("索引已存在，跳过创建")
 		return nil
 	}
 
-	// 如果索引不存在，创建新索�?
+	// 如果索引不存在，创建新索引
 	if !strings.Contains(err.Error(), "Unknown index name") {
-		return fmt.Errorf("检查索引失�? %w", err)
+		return fmt.Errorf("检查索引失败: %w", err)
 	}
 
 	fmt.Println("正在创建 Redis 索引...")
@@ -104,11 +104,11 @@ func InitRedisIndex(ctx context.Context, filename string, dimension int) error {
 		return fmt.Errorf("创建索引失败: %w", err)
 	}
 
-	fmt.Println("索引创建成功�?)
+	fmt.Println("索引创建成功")
 	return nil
 }
 
-// DeleteRedisIndex 删除 Redis 索引，支持按文件名区�?
+// DeleteRedisIndex 删除 Redis 索引，支持按文件名区分索引
 func DeleteRedisIndex(ctx context.Context, filename string) error {
 	indexName := GenerateIndexName(filename)
 
@@ -117,6 +117,6 @@ func DeleteRedisIndex(ctx context.Context, filename string) error {
 		return fmt.Errorf("删除索引失败: %w", err)
 	}
 
-	fmt.Println("索引删除成功�?)
+	fmt.Println("索引删除成功")
 	return nil
 }
