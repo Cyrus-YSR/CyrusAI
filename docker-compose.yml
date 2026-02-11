@@ -20,7 +20,7 @@ services:
     # 启动时下载依赖并直接运行源代码
     command: sh -c "ln -sf /usr/lib/libonnxruntime.so /usr/lib/onnxruntime.so && go mod tidy && go run main.go"
     environment:
-      - OPENAI_API_KEY=sk-38b19adf8f0a4b3295c6c6689064a000
+      - OPENAI_API_KEY=sk-xxxxxx
       - OPENAI_MODEL_NAME=qwen-plus
       - OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
       - ORT_DYLIB_PATH=/usr/lib/libonnxruntime.so
