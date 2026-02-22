@@ -25,25 +25,29 @@
     <div class="chat-section">
       <div class="top-bar">
         <button class="back-btn" @click="$router.push('/menu')">← 返回</button>
-        <button class="sync-btn" @click="syncHistory" :disabled="!currentSessionId || tempSession">同步历史数据</button>
         
-        <div class="model-select-wrapper">
-          <span class="label">模型：</span>
-          <el-select v-model="selectedModel" class="custom-select" popper-class="custom-dropdown">
-            <el-option label="阿里百炼" value="1" />
-            <el-option label="阿里百炼 RAG" value="2" />
-            <el-option label="阿里百炼 MCP" value="3" />
-          </el-select>
-        </div>
+        <div class="top-bar-right">
+          <button class="sync-btn" @click="syncHistory" :disabled="!currentSessionId || tempSession">同步历史数据</button>
+          
+          <div class="model-select-wrapper">
+            <span class="label">模型：</span>
+            <el-select v-model="selectedModel" class="custom-select" popper-class="custom-dropdown">
+              <el-option label="阿里百炼" value="1" />
+              <el-option label="阿里百炼 RAG" value="2" />
+              <el-option label="阿里百炼 MCP" value="3" />
+            </el-select>
+          </div>
 
-        <button class="upload-btn" @click="triggerFileUpload" :disabled="uploading">📎 上传文档(.md/.txt)</button>
-        <input
-          ref="fileInput"
-          type="file"
-          accept=".md,.txt,text/markdown,text/plain"
-          style="display: none"
-          @change="handleFileUpload"
-        />
+          <button class="upload-btn" @click="triggerFileUpload" :disabled="uploading">📎 上传文档(.md/.txt)</button>
+          <input
+            ref="fileInput"
+            type="file"
+            accept=".md,.txt,text/markdown,text/plain"
+            style="display: none"
+            @change="handleFileUpload"
+          />
+          <ThemeToggle />
+        </div>
       </div>
 
       <div class="chat-messages" ref="messagesRef">
@@ -99,13 +103,17 @@
 
 <script>
 import { ref, nextTick, computed, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+  // import { useRouter } from 'vue-router'
+  import { ElMessage } from 'element-plus'
 import api from '../utils/api'
 import { marked } from 'marked'
+import ThemeToggle from '../components/ThemeToggle.vue'
 
 export default {
   name: 'AIChat',
+  components: { ThemeToggle },
   setup() {
+    // const router = useRouter() // unused
 
     const sessions = ref({})
     const currentSessionId = ref(null)
@@ -651,19 +659,19 @@ export default {
 .ai-chat-container {
   height: 100vh;
   display: flex;
-  /* Nano Banana 动态背景 */
-  background-color: #050505;
+  background-color: var(--bg-cyber);
   background-image: 
-    linear-gradient(rgba(241, 196, 15, 0.25) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(241, 196, 15, 0.25) 1px, transparent 1px);
+    linear-gradient(var(--cyber-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cyber-grid) 1px, transparent 1px);
   background-size: 40px 40px;
   position: relative;
   overflow: hidden;
   font-family: 'Helvetica Neue', Arial, sans-serif;
-  color: #fff;
-  padding: 20px; /* 增加外边距实现悬浮感 */
-  gap: 20px;     /* 增加板块间距 */
+  color: var(--text-primary);
+  padding: 20px;
+  gap: 20px;
   box-sizing: border-box;
+  transition: background-color 0.3s;
 }
 
 /* 扫描波浪效果 */
@@ -674,7 +682,7 @@ export default {
   left: -100%;
   width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(241, 196, 15, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, var(--cyber-wave), transparent);
   animation: scanWave 8s linear infinite;
   pointer-events: none;
   z-index: 0;
@@ -693,7 +701,7 @@ export default {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at 50% 50%, rgba(241, 196, 15, 0.05) 0%, transparent 60%);
+  background: radial-gradient(circle at 50% 50%, var(--cyber-pulse) 0%, transparent 60%);
   animation: bgPulse 20s ease-in-out infinite;
   pointer-events: none;
   z-index: 0;
@@ -726,14 +734,14 @@ export default {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: rgba(26, 26, 26, 0.6); /* 增加透明度 */
-  backdrop-filter: blur(20px);       /* 玻璃磨砂 */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;               /* 大圆角 */
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
   position: relative;
   z-index: 2;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  animation: slideInLeft 1.0s ease-out; /* 历史记录框从左侧渐入 */
+  box-shadow: 0 10px 30px var(--shadow-color);
+  animation: slideInLeft 1.0s ease-out;
 }
 
 .session-list-header {
@@ -875,22 +883,29 @@ export default {
   z-index: 1;
   min-width: 0;
   min-height: 0;
-  background: rgba(26, 26, 26, 0.6); /* 增加透明度 */
-  backdrop-filter: blur(20px);       /* 玻璃磨砂 */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 24px;               /* 大圆角 */
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  animation: slideInDown 1.0s ease-out; /* 聊天框从上方渐入 */
+  box-shadow: 0 10px 30px var(--shadow-color);
+  animation: slideInDown 1.0s ease-out;
 }
 
 .top-bar {
-  background: rgba(26, 26, 26, 0.4);
-  color: #fff;
+  background: var(--header-bg);
+  color: var(--text-primary);
   display: flex;
+  justify-content: space-between;
   align-items: center;
   padding: 16px 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-color);
+  gap: 12px;
+}
+
+.top-bar-right {
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
@@ -1016,15 +1031,15 @@ export default {
   position: relative;
   font-size: 15px;
   box-sizing: border-box;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 10px var(--shadow-color);
 }
 
 .user-message {
   align-self: flex-end;
-  background: #f1c40f;
-  color: #000;
+  background: var(--accent-color);
+  color: var(--text-inverse);
   border-bottom-right-radius: 4px; /* 气泡角风格 */
-  box-shadow: 0 5px 20px rgba(241, 196, 15, 0.15);
+  box-shadow: 0 5px 20px var(--cyber-wave);
 }
 
 .user-message::after {
@@ -1034,9 +1049,9 @@ export default {
 
 .ai-message {
   align-self: flex-start;
-  background: rgba(40, 40, 40, 0.8);
-  color: #e0e0e0;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   border-bottom-left-radius: 4px;
 }
 
@@ -1177,41 +1192,41 @@ export default {
 .chat-input-container {
   position: absolute;
   bottom: 20px;
-  left: 320px; /* 280px (session-list) + 20px (gap) + 20px (padding) */
+  left: 320px;
   right: 20px;
   z-index: 10;
-  animation: slideInUp 1.0s ease-out; /* 输入框从下方渐入 */
+  animation: slideInUp 1.0s ease-out;
 }
 
 .chat-input {
   padding: 20px;
-  background: rgba(26, 26, 26, 0.8);
+  background: var(--bg-glass);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 24px;
   position: relative;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px var(--shadow-color);
 }
 
 .chat-input textarea {
   width: 100%;
   resize: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 16px;
   padding: 16px 18px;
   font-size: 15px;
   outline: none;
-  background: rgba(0, 0, 0, 0.3);
-  color: #fff;
+  background: var(--bg-input);
+  color: var(--text-primary);
   transition: all 0.2s ease;
   min-height: 20px;
   max-height: 160px;
 }
 
 .chat-input textarea:focus {
-  border-color: #f1c40f;
-  background: rgba(0, 0, 0, 0.5);
-  box-shadow: 0 0 15px rgba(241, 196, 15, 0.1);
+  border-color: var(--accent-color);
+  background: var(--bg-input);
+  box-shadow: 0 0 15px var(--cyber-pulse);
 }
 
 .send-btn {
@@ -1221,8 +1236,8 @@ export default {
   padding: 10px 24px;
   border: none;
   border-radius: 50px;
-  background: #f1c40f;
-  color: #000;
+  background: var(--accent-color);
+  color: var(--text-inverse);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
@@ -1232,9 +1247,9 @@ export default {
 }
 
 .send-btn:hover:not(:disabled) {
-  background: #f39c12;
+  background: var(--accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 4px 15px rgba(241, 196, 15, 0.4);
+  box-shadow: 0 4px 15px var(--cyber-wave);
 }
 
 .send-btn:disabled {
@@ -1295,31 +1310,31 @@ export default {
 <style>
 /* 全局覆盖下拉菜单样式 */
 .custom-dropdown.el-popper {
-  background-color: rgba(26, 26, 26, 0.95) !important;
-  border: 1px solid rgba(241, 196, 15, 0.2) !important;
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
   backdrop-filter: blur(10px);
 }
 
 .custom-dropdown .el-select-dropdown__item {
-  color: #ccc !important;
+  color: var(--text-regular) !important;
   background-color: transparent !important;
 }
 
 .custom-dropdown .el-select-dropdown__item.hover,
 .custom-dropdown .el-select-dropdown__item:hover {
-  background-color: rgba(241, 196, 15, 0.1) !important;
-  color: #f1c40f !important;
+  background-color: var(--cyber-grid) !important;
+  color: var(--accent-color) !important;
 }
 
 .custom-dropdown .el-select-dropdown__item.is-selected {
-  color: #f1c40f !important;
+  color: var(--accent-color) !important;
   font-weight: 700;
-  background-color: rgba(241, 196, 15, 0.15) !important;
+  background-color: var(--cyber-wave) !important;
 }
 
 /* 修复小箭头颜色 */
 .custom-dropdown .el-popper__arrow::before {
-  background-color: rgba(26, 26, 26, 0.95) !important;
-  border: 1px solid rgba(241, 196, 15, 0.2) !important;
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
 }
 </style>
