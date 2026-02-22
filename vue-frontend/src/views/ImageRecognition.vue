@@ -15,10 +15,13 @@
     <!-- 右侧聊天区域 -->
     <div class="chat-section">
       <div class="top-bar">
-        <button class="back-btn" @click="$router.push('/menu')">← 返回</button>
-        <h2>AI 图像识别助手</h2>
+        <div class="left-group">
+          <button class="back-btn" @click="$router.push('/menu')">← 返回</button>
+          <h2>AI 图像识别助手</h2>
+        </div>
+        <ThemeToggle />
       </div>
-
+      
       <div class="chat-messages" ref="chatContainerRef">
         <div
           v-for="(message, index) in messages"
@@ -54,9 +57,11 @@
 <script>
 import { ref, nextTick } from 'vue'
 import api from '../utils/api'
+import ThemeToggle from '../components/ThemeToggle.vue'
 
 export default {
   name: 'ImageRecognition',
+  components: { ThemeToggle },
   setup() {
     const messages = ref([])
     const selectedFile = ref(null)
@@ -153,19 +158,19 @@ export default {
 .image-recognition-container {
   height: 100vh;
   display: flex;
-  /* Nano Banana 动态背景 */
-  background-color: #050505;
+  background-color: var(--bg-cyber);
   background-image: 
-    linear-gradient(rgba(241, 196, 15, 0.25) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(241, 196, 15, 0.25) 1px, transparent 1px);
+    linear-gradient(var(--cyber-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cyber-grid) 1px, transparent 1px);
   background-size: 40px 40px;
   position: relative;
   overflow: hidden;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  color: #fff;
-  padding: 20px; /* 增加外边距实现悬浮感 */
-  gap: 20px;     /* 增加板块间距 */
+  color: var(--text-primary);
+  padding: 20px;
+  gap: 20px;
   box-sizing: border-box;
+  transition: background-color 0.3s;
 }
 
 /* 进场动画定义 */
@@ -192,7 +197,7 @@ export default {
   left: -100%;
   width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(241, 196, 15, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, var(--cyber-wave), transparent);
   animation: scanWave 8s linear infinite;
   pointer-events: none;
   z-index: 0;
@@ -211,7 +216,7 @@ export default {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle at 50% 50%, rgba(241, 196, 15, 0.05) 0%, transparent 60%);
+  background: radial-gradient(circle at 50% 50%, var(--cyber-pulse) 0%, transparent 60%);
   animation: bgPulse 20s ease-in-out infinite;
   pointer-events: none;
   z-index: 0;
@@ -224,27 +229,27 @@ export default {
 
 .session-list {
   width: 280px;
-  height: 100%; /* 填满父容器 */
+  height: 100%;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  background: rgba(26, 26, 26, 0.6);
+  background: var(--bg-glass);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px var(--shadow-color);
   position: relative;
   z-index: 2;
-  animation: slideInLeft 1.0s ease-out; /* 历史记录框从左侧渐入 */
+  animation: slideInLeft 1.0s ease-out;
 }
 
 .session-list-header {
   padding: 20px;
   text-align: center;
   font-weight: 600;
-  background: rgba(26, 26, 26, 0.8);
-  border-bottom: 1px solid rgba(241, 196, 15, 0.2);
-  color: #f1c40f;
+  background: transparent;
+  border-bottom: 1px solid var(--border-color);
+  color: var(--accent-color);
 }
 
 .session-list-ul {
@@ -258,10 +263,10 @@ export default {
 .session-item {
   padding: 15px 20px;
   cursor: pointer;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-color);
   transition: all 0.2s ease;
   position: relative;
-  color: #dcdcdc;
+  color: var(--text-regular);
 }
 
 .session-item.active {
@@ -280,23 +285,30 @@ export default {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
-  background: rgba(26, 26, 26, 0.6);
+  background: var(--bg-glass);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px var(--shadow-color);
   animation: slideInDown 1.0s ease-out; /* 聊天框从上方渐入 */
 }
 
 .top-bar {
-  background: rgba(26, 26, 26, 0.6);
+  background: var(--header-bg);
   backdrop-filter: blur(10px);
-  color: #fff;
+  color: var(--text-primary);
   display: flex;
+  justify-content: space-between;
   align-items: center;
   padding: 12px 24px;
-  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.2);
-  border-bottom: 1px solid rgba(241, 196, 15, 0.2);
+  box-shadow: 0 2px 14px var(--shadow-color);
+  border-bottom: 1px solid var(--border-color);
+  gap: 12px;
+}
+
+.left-group {
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
 
@@ -395,11 +407,11 @@ export default {
 
 .ai-message {
   align-self: flex-start;
-  background: rgba(26, 26, 26, 0.8);
+  background: var(--bg-secondary);
   backdrop-filter: blur(4px);
-  color: #dcdcdc;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary);
+  box-shadow: 0 6px 20px var(--shadow-color);
+  border: 1px solid var(--border-color);
 }
 
 .ai-message::after {
@@ -411,7 +423,7 @@ export default {
   height: 0;
   border-left: 8px solid transparent;
   border-right: 8px solid transparent;
-  border-top: 8px solid rgba(26, 26, 26, 0.8);
+  border-top: 8px solid var(--bg-secondary);
 }
 
 .message-header {
@@ -419,7 +431,7 @@ export default {
   align-items: center;
   gap: 10px;
   margin-bottom: 8px;
-  color: #f1c40f;
+  color: var(--accent-color);
 }
 
 .message-header b {
@@ -437,7 +449,7 @@ export default {
   border-radius: 12px;
   display: block;
   margin-top: 12px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 15px var(--shadow-color);
   border: 1px solid rgba(241, 196, 15, 0.2);
   transition: all 0.3s ease;
 }
@@ -459,12 +471,12 @@ export default {
 
 .chat-input {
   padding: 20px;
-  background: rgba(26, 26, 26, 0.8);
+  background: var(--bg-glass);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid var(--border-color);
   border-radius: 24px;
   position: relative;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 10px 30px var(--shadow-color);
 }
 
 .chat-input form {
@@ -474,18 +486,18 @@ export default {
 
 .chat-input input[type="file"] {
   flex: 1;
-  border: 1px dashed rgba(241, 196, 15, 0.3);
+  border: 1px dashed var(--border-color);
   border-radius: 12px;
   padding: 15px 20px;
-  background: rgba(0, 0, 0, 0.3);
-  color: #ccc;
+  background: var(--bg-input);
+  color: var(--text-primary);
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 14px;
 }
 
 .chat-input input[type="file"]:hover {
-  border-color: #f1c40f;
+  border-color: var(--accent-color);
   background: rgba(241, 196, 15, 0.05);
 }
 
@@ -529,8 +541,8 @@ export default {
 }
 
 .chat-input button:disabled {
-  background: #555;
-  color: #888;
+  background: var(--border-color);
+  color: var(--text-regular);
   box-shadow: none;
   cursor: not-allowed;
   transform: none;

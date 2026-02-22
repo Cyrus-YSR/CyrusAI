@@ -32,7 +32,7 @@ type ImageRecognizer struct {
 
 const (
 	defaultInputName  = "data"
-	defaultOutputName = "resnetv27_dense0_fwd" // ResNet50 v2-7 的输出节点名称
+	defaultOutputName = "resnetv24_dense0_fwd"
 )
 
 var (
@@ -57,7 +57,15 @@ func NewImageRecognizer(modelPath, labelPath string, inputH, inputW int) (*Image
 		return nil, fmt.Errorf("onnxruntime initialize error: %w", initErr)
 	}
 
-	// 预先创建输入输出 Tensor
+	inputName := os.Getenv("IMAGE_MODEL_INPUT_NAME")
+	if inputName == "" {
+		inputName = defaultInputName
+	}
+	outputName := os.Getenv("IMAGE_MODEL_OUTPUT_NAME")
+	if outputName == "" {
+		outputName = defaultOutputName
+	}
+
 	inputShape := ort.NewShape(1, 3, int64(inputH), int64(inputW))
 	inData := make([]float32, inputShape.FlattenedSize())
 	inTensor, err := ort.NewTensor(inputShape, inData)
@@ -72,11 +80,10 @@ func NewImageRecognizer(modelPath, labelPath string, inputH, inputW int) (*Image
 		return nil, fmt.Errorf("create output tensor failed: %w", err)
 	}
 
-	// 创建 Session
 	session, err := ort.NewSession[float32](
 		modelPath,
-		[]string{defaultInputName},
-		[]string{defaultOutputName},
+		[]string{inputName},
+		[]string{outputName},
 		[]*ort.Tensor[float32]{inTensor},
 		[]*ort.Tensor[float32]{outTensor},
 	)
@@ -97,8 +104,8 @@ func NewImageRecognizer(modelPath, labelPath string, inputH, inputW int) (*Image
 
 	return &ImageRecognizer{
 		session:      session,
-		inputName:    defaultInputName,
-		outputName:   defaultOutputName,
+		inputName:    inputName,
+		outputName:   outputName,
 		inputH:       inputH,
 		inputW:       inputW,
 		labels:       labels,

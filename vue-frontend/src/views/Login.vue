@@ -4,6 +4,9 @@
       <template #header>
         <div class="card-header">
           <h2>登录</h2>
+          <div class="header-toggle">
+            <ThemeToggle />
+          </div>
         </div>
       </template>
       <el-form
@@ -55,9 +58,11 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import api from '../utils/api'
+import ThemeToggle from '../components/ThemeToggle.vue'
 
 export default {
   name: 'LoginView',
+  components: { ThemeToggle },
   setup() {
     const router = useRouter()
     const loginFormRef = ref()
@@ -117,14 +122,14 @@ export default {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  /* Nano Banana 动态背景 */
-  background-color: #050505;
+  background-color: var(--bg-cyber);
   background-image: 
-    linear-gradient(rgba(241, 196, 15, 0.25) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(241, 196, 15, 0.25) 1px, transparent 1px);
+    linear-gradient(var(--cyber-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cyber-grid) 1px, transparent 1px);
   background-size: 40px 40px;
   position: relative;
   overflow: hidden;
+  transition: background-color 0.3s;
 }
 
 /* 扫描波浪效果 */
@@ -135,7 +140,7 @@ export default {
   left: -100%;
   width: 50%;
   height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(241, 196, 15, 0.4), transparent);
+  background: linear-gradient(90deg, transparent, var(--cyber-wave), transparent);
   animation: scanWave 8s linear infinite;
   pointer-events: none;
   z-index: 0;
@@ -153,7 +158,7 @@ export default {
   left: -50%;
   width: 200%;
   height: 200%;
-  background: radial-gradient(circle, rgba(241, 196, 15, 0.08) 0%, transparent 60%);
+  background: radial-gradient(circle, var(--cyber-pulse) 0%, transparent 60%);
   animation: pulse 10s ease-in-out infinite;
 }
 
@@ -164,11 +169,11 @@ export default {
 
 .login-card {
   width: 420px;
-  background: rgba(26, 26, 26, 0.8) !important;
+  background: var(--bg-secondary) !important;
   backdrop-filter: blur(15px);
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(241, 196, 15, 0.2) !important;
+  box-shadow: 0 8px 32px var(--shadow-color);
+  border: 1px solid var(--border-color) !important;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   animation: slideIn 0.8s ease-out;
   position: relative;
@@ -183,15 +188,15 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(241, 196, 15, 0.1) 0%, transparent 100%);
+  background: linear-gradient(135deg, var(--cyber-pulse) 0%, transparent 100%);
   opacity: 0;
   transition: opacity 0.3s;
 }
 
 .login-card:hover {
   transform: translateY(-10px);
-  border-color: #f1c40f !important;
-  box-shadow: 0 15px 40px rgba(241, 196, 15, 0.15);
+  border-color: var(--accent-hover) !important;
+  box-shadow: 0 15px 40px var(--cyber-pulse);
 }
 
 .login-card:hover::before {
@@ -214,19 +219,30 @@ export default {
 }
 
 .card-header {
-  text-align: center;
   padding: 30px 0 20px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid var(--border-color);
+  position: relative; /* 为绝对定位提供锚点 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.header-toggle {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
 }
 
 .card-header h2 {
   margin: 0;
-  color: #f1c40f;
+  color: var(--accent-color);
   font-size: 28px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 2px;
-  text-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
+  text-shadow: 0 0 10px var(--cyber-pulse);
+  transition: color 0.3s;
 }
 
 .el-form-item {
@@ -234,7 +250,7 @@ export default {
 }
 
 :deep(.el-form-item__label) {
-  color: #f1c40f !important;
+  color: var(--accent-color) !important;
   font-weight: 600;
 }
 
@@ -258,24 +274,24 @@ export default {
 }
 
 .el-button--primary {
-  background: #f1c40f;
+  background: var(--accent-color);
   border: none;
-  color: #000;
-  box-shadow: 0 4px 15px rgba(241, 196, 15, 0.3);
+  color: var(--text-inverse);
+  box-shadow: 0 4px 15px var(--cyber-wave);
 }
 
 .el-button--primary:hover {
-  background: #f39c12;
+  background: var(--accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(241, 196, 15, 0.5);
+  box-shadow: 0 6px 20px var(--cyber-pulse);
 }
 
 .el-button--text {
-  color: #aaa;
+  color: var(--text-regular);
 }
 
 .el-button--text:hover {
-  color: #f1c40f;
+  color: var(--accent-color);
 }
 
 </style>

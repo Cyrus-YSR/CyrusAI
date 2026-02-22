@@ -1,0 +1,92 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gopherai-backend
+    ports:
+      - "9090:9090"
+    depends_on:
+      - mysql
+      - redis
+      - rabbitmq
+      - mcp-server
+    environment:
+      - OPENAI_API_KEY=sk-38b19adf8f0a4b3295c6c6689064a000
+      - OPENAI_MODEL_NAME=qwen-plus
+      - OPENAI_BASE_URL=https://dashscope.aliyuncs.com/compatible-mode/v1
+      - ORT_DYLIB_PATH=/usr/lib/libonnxruntime.so
+      - CGO_ENABLED=1
+      - IS_DOCKER=true
+    networks:
+      - gopherai-net
+    restart: always
+
+  frontend:
+    build:
+      context: ./vue-frontend
+      dockerfile: Dockerfile
+    container_name: gopherai-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    networks:
+      - gopherai-net
+    restart: always
+
+  mysql:
+    image: m.daocloud.io/docker.io/library/mysql:8.0
+    container_name: gopherai-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=123456
+      - MYSQL_DATABASE=GopherAI
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - gopherai-net
+    restart: always
+
+  redis:
+    image: m.daocloud.io/docker.io/redis/redis-stack-server:latest
+    container_name: gopherai-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - gopherai-net
+    restart: always
+
+  rabbitmq:
+    image: m.daocloud.io/docker.io/library/rabbitmq:3-management
+    container_name: gopherai-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=root
+      - RABBITMQ_DEFAULT_PASS=123456
+      - RABBITMQ_DEFAULT_VHOST=/
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - gopherai-net
+    restart: always
+
+  mcp-server:
+    build:
+      context: .
+      dockerfile: Dockerfile # 这里可以考虑为 MCP 单独写一个 Dockerfile，但为了简单可以先复用或单独处理
+    container_name: gopherai-mcp-server
+    command: sh -c "cd common/mcp && go run . --mode server --http-addr :8081"
+    ports:
+      - "8082:8081"
+    networks:
+      - gopherai-net
+    restart: always
+
+networks:
+  gopherai-net:
+    driver: bridge
+
+volumes:
+  mysql-data:

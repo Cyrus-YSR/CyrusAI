@@ -1,21 +1,26 @@
 <template>
   <div class="menu-container">
     <el-header class="header">
-      <h1>CyrusAI</h1>
-      <el-button type="danger" @click="handleLogout">退出登录</el-button>
+      <div class="header-brand">
+        <h1>CyrusAI</h1>
+      </div>
+      <div class="header-actions">
+        <ThemeToggle />
+        <el-button type="danger" @click="handleLogout">退出登录</el-button>
+      </div>
     </el-header>
     <el-main class="main">
       <div class="menu-grid">
         <el-card class="menu-item" @click="$router.push('/ai-chat')">
           <div class="card-content">
-            <el-icon size="48" color="#409eff"><ChatDotRound /></el-icon>
+            <el-icon size="48"><ChatDotRound /></el-icon>
             <h3>AI聊天</h3>
             <p>与AI进行智能对话</p>
           </div>
         </el-card>
         <el-card class="menu-item" @click="$router.push('/image-recognition')">
           <div class="card-content">
-            <el-icon size="48" color="#67c23a"><Camera /></el-icon>
+            <el-icon size="48"><Camera /></el-icon>
             <h3>图像识别</h3>
             <p>上传图片进行AI识别</p>
           </div>
@@ -29,12 +34,14 @@
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { ChatDotRound, Camera } from '@element-plus/icons-vue'
+import ThemeToggle from '../components/ThemeToggle.vue'
 
 export default {
   name: 'MenuView',
   components: {
     ChatDotRound,
-    Camera
+    Camera,
+    ThemeToggle
   },
   setup() {
     const router = useRouter()
@@ -67,13 +74,14 @@ export default {
   display: flex;
   flex-direction: column;
   /* Nano Banana 动态背景 */
-  background-color: #050505;
+  background-color: var(--bg-cyber);
   background-image: 
-    linear-gradient(rgba(241, 196, 15, 0.25) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(241, 196, 15, 0.25) 1px, transparent 1px);
+    linear-gradient(var(--cyber-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--cyber-grid) 1px, transparent 1px);
   background-size: 30px 30px;
   position: relative;
   overflow: hidden;
+  transition: background-color 0.3s;
 }
 
 .menu-container::before {
@@ -83,7 +91,7 @@ export default {
   left: 0;
   right: 0;
   bottom: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(241, 196, 15, 0.05) 0%, transparent 70%);
+  background: radial-gradient(circle at 50% 50%, var(--cyber-pulse) 0%, transparent 70%);
   animation: pulse 15s ease-in-out infinite;
 }
 
@@ -93,17 +101,24 @@ export default {
 }
 
 .header {
-  background: rgba(26, 26, 26, 0.9);
+  background: var(--header-bg);
   backdrop-filter: blur(10px);
-  color: #f1c40f;
+  color: var(--accent-color);
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 30px;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
-  border-bottom: 1px solid rgba(241, 196, 15, 0.2);
+  box-shadow: 0 2px 20px var(--shadow-color);
+  border-bottom: 1px solid var(--cyber-wave);
   position: relative;
   z-index: 2;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
 }
 
 .header h1 {
@@ -112,8 +127,9 @@ export default {
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: #f1c40f;
-  text-shadow: 0 0 10px rgba(241, 196, 15, 0.3);
+  color: var(--accent-color);
+  text-shadow: 0 0 10px var(--cyber-pulse);
+  transition: color 0.3s;
 }
 
 .main {
@@ -148,11 +164,11 @@ export default {
 
 .menu-item {
   cursor: pointer;
-  background: rgba(26, 26, 26, 0.8) !important;
+  background: var(--bg-secondary) !important;
   backdrop-filter: blur(15px);
   border-radius: 20px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(241, 196, 15, 0.2) !important;
+  box-shadow: 0 8px 32px var(--shadow-color);
+  border: 1px solid var(--border-color) !important;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
@@ -165,15 +181,15 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, rgba(241, 196, 15, 0.1) 0%, transparent 100%);
+  background: linear-gradient(135deg, var(--cyber-pulse) 0%, transparent 100%);
   opacity: 0;
   transition: opacity 0.3s;
 }
 
 .menu-item:hover {
   transform: translateY(-10px);
-  border-color: #f1c40f !important;
-  box-shadow: 0 15px 40px rgba(241, 196, 15, 0.15);
+  border-color: var(--accent-hover) !important;
+  box-shadow: 0 15px 40px var(--cyber-pulse);
 }
 
 .menu-item:hover::before {
@@ -191,36 +207,36 @@ export default {
   display: block;
   margin: 0 auto 20px;
   transition: all 0.3s ease;
-  color: #f1c40f !important;
+  color: var(--accent-color) !important;
 }
 
 .menu-item:hover .el-icon {
   transform: scale(1.2) rotate(5deg);
-  color: #fff !important;
-  text-shadow: 0 0 15px #f1c40f;
+  color: var(--icon-hover-color) !important;
+  text-shadow: 0 0 15px var(--accent-color);
 }
 
 .card-content h3 {
   margin: 0 0 15px 0;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 24px;
   font-weight: 600;
   transition: all 0.3s ease;
 }
 
 .menu-item:hover h3 {
-  color: #f1c40f;
+  color: var(--accent-color);
 }
 
 .card-content p {
   margin: 0;
-  color: #999;
+  color: var(--text-regular);
   font-size: 16px;
   line-height: 1.6;
   transition: all 0.3s ease;
 }
 
 .menu-item:hover p {
-  color: #ccc;
+  color: var(--text-secondary);
 }
 </style>

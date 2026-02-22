@@ -79,17 +79,18 @@ func AnalyzeImage(c *gin.Context) {
 		return
 	}
 	var b strings.Builder
-	b.WriteString("你是一位专业的图像讲解助手，请基于识别结果做详细中文解析。\n")
-	b.WriteString("识别结果（label/score）如下：\n")
+	b.WriteString("你是一位严谨的图像讲解助手，请基于下方的模型识别结果，用中文做详细解析。\n")
+	b.WriteString("注意：识别结果来自通用图像分类模型，只能给出大致类别，尤其在宠物品种（例如不同猫狗品种）上不一定精确，请在回答中自然提醒用户这一点，不要声称百分之百准确。\n")
+	b.WriteString("\n模型给出的主要类别标签如下（仅供参考）：\n")
 	b.WriteString("- ")
 	b.WriteString(className)
-	b.WriteString(" / 1.0\n")
+	b.WriteString("\n")
 	b.WriteString("\n请按照以下结构输出：\n")
-	b.WriteString("1) 整体描述（一句话概括）；\n")
+	b.WriteString("1) 整体描述（一句话概括，不要绝对化用语）；\n")
 	b.WriteString("2) 主要物体及可见特征；\n")
 	b.WriteString("3) 可能的场景或用途；\n")
 	b.WriteString("4) 风险或注意事项；\n")
-	b.WriteString("5) 延伸建议（可选）。\n")
+	b.WriteString("5) 结果不确定性的说明，以及必要时的延伸建议（可选）。\n")
 	msgs := []*schema.Message{
 		{Role: "system", Content: "你是严谨的中文图像讲解助手"},
 		{Role: "user", Content: b.String()},
