@@ -121,7 +121,7 @@ func CreateStreamSessionAndSendMessage(c *gin.Context) {
 	c.Writer.Flush()
 
 	// 然后开始把本次回答进行流式发送（包含最后的 [DONE] 事件）
-	code_ = session.StreamMessageToExistingSession(userName, sessionID, req.UserQuestion, req.ModelType, http.ResponseWriter(c.Writer))
+	code_ = session.StreamMessageToExistingSessionWithContext(c.Request.Context(), userName, sessionID, req.UserQuestion, req.ModelType, http.ResponseWriter(c.Writer))
 	if code_ != code.CodeSuccess {
 		c.SSEvent("error", gin.H{"message": "Failed to send message"})
 		return
@@ -170,7 +170,7 @@ func ChatStreamSend(c *gin.Context) {
 	c.Header("X-Accel-Buffering", "no") // 禁止代理缓存
 	c.Header("Content-Encoding", "identity")
 
-	code_ := session.ChatStreamSend(userName, req.SessionID, req.UserQuestion, req.ModelType, http.ResponseWriter(c.Writer))
+	code_ := session.StreamMessageToExistingSessionWithContext(c.Request.Context(), userName, req.SessionID, req.UserQuestion, req.ModelType, http.ResponseWriter(c.Writer))
 	if code_ != code.CodeSuccess {
 		c.SSEvent("error", gin.H{"message": "Failed to send message"})
 		return

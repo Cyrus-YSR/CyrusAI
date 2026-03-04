@@ -270,10 +270,10 @@ export default {
 }
 
 .session-item.active {
-  background: rgba(241, 196, 15, 0.15);
-  color: #f1c40f;
+  background: rgba(var(--accent-rgb), 0.15);
+  color: var(--accent-color);
   font-weight: 600;
-  box-shadow: inset 4px 0 0 #f1c40f;
+  box-shadow: inset 4px 0 0 var(--accent-color);
 }
 
 .chat-section {
@@ -313,28 +313,28 @@ export default {
 }
 
 .back-btn {
-  background: rgba(241, 196, 15, 0.1);
-  border: 1px solid rgba(241, 196, 15, 0.3);
-  color: #f1c40f;
+  background: var(--bg-glass-light);
+  border: 1px solid rgba(var(--accent-rgb), 0.3);
+  color: var(--accent-color);
   padding: 8px 14px;
   border-radius: 10px;
   cursor: pointer;
   font-weight: 600;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px var(--glass-shadow);
 }
 
 .back-btn:hover {
-  background: rgba(241, 196, 15, 0.2);
+  background: var(--bg-glass);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(241, 196, 15, 0.15);
+  box-shadow: 0 6px 20px var(--glass-shadow);
 }
 
 .top-bar h2 {
   margin: 0;
   font-size: 24px;
   font-weight: 600;
-  color: #f1c40f;
+  color: var(--accent-color);
 }
 
 .chat-messages {
@@ -355,7 +355,7 @@ export default {
   width: 8px;
 }
 .chat-messages::-webkit-scrollbar-thumb {
-  background: rgba(241, 196, 15, 0.3);
+  background: var(--scrollbar-thumb);
   border-radius: 8px;
 }
 .chat-messages::-webkit-scrollbar-track {
@@ -387,10 +387,10 @@ export default {
 
 .user-message {
   align-self: flex-end;
-  background: rgba(241, 196, 15, 0.2);
-  color: #fff;
-  border: 1px solid rgba(241, 196, 15, 0.3);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  background: var(--accent-color);
+  color: var(--text-inverse);
+  border: 1px solid var(--accent-color);
+  box-shadow: 0 6px 20px var(--glass-shadow);
 }
 
 .user-message::after {

@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"sync"
 
 	"github.com/google/uuid"
 )
@@ -110,6 +111,10 @@ func CreateStreamSessionOnly(userName string, userQuestion string) (string, code
 }
 
 func StreamMessageToExistingSession(userName string, sessionID string, userQuestion string, modelType string, writer http.ResponseWriter) code.Code {
+	return StreamMessageToExistingSessionWithContext(ctx, userName, sessionID, userQuestion, modelType, writer)
+}
+
+func StreamMessageToExistingSessionWithContext(reqCtx context.Context, userName string, sessionID string, userQuestion string, modelType string, writer http.ResponseWriter) code.Code {
 	log.Printf("[Service] StreamMessageToExistingSession Start. User=%s, Session=%s, Model=%s", userName, sessionID, modelType)
 	// 确保 writer 支持 Flush
 	flusher, ok := writer.(http.Flusher)
@@ -117,6 +122,13 @@ func StreamMessageToExistingSession(userName string, sessionID string, userQuest
 		log.Println("StreamMessageToExistingSession: streaming unsupported")
 		return code.CodeServerBusy
 	}
+
+	if reqCtx == nil {
+		reqCtx = context.Background()
+	}
+	streamCtx, cancel := context.WithCancel(reqCtx)
+	defer cancel()
+	var cancelOnce sync.Once
 
 	manager := aihelper.GetGlobalManager()
 	config := map[string]interface{}{
@@ -132,6 +144,11 @@ func StreamMessageToExistingSession(userName string, sessionID string, userQuest
 	log.Println("[Service] AIHelper Obtained. Starting StreamResponse...")
 
 	cb := func(msg string) {
+		select {
+		case <-streamCtx.Done():
+			return
+		default:
+		}
 		log.Printf("[SSE] Sending chunk: %s (len=%d)\n", msg, len(msg))
 		payload, err := json.Marshal(map[string]string{
 			"type":    "delta",
@@ -144,22 +161,30 @@ func StreamMessageToExistingSession(userName string, sessionID string, userQuest
 		_, err = writer.Write([]byte("data: " + string(payload) + "\n\n"))
 		if err != nil {
 			log.Println("[SSE] Write error:", err)
+			cancelOnce.Do(cancel)
 			return
 		}
 		flusher.Flush()
 		log.Println("[SSE] Flushed")
 	}
 
-	_, err_ := helper.StreamResponse(userName, ctx, cb, userQuestion)
+	_, err_ := helper.StreamResponse(userName, streamCtx, cb, userQuestion)
 	if err_ != nil {
+		if streamCtx.Err() != nil {
+			return code.CodeSuccess
+		}
 		log.Println("StreamMessageToExistingSession StreamResponse error:", err_)
 		return code.AIModelFail
+	}
+
+	if streamCtx.Err() != nil {
+		return code.CodeSuccess
 	}
 
 	_, err = writer.Write([]byte("data: [DONE]\n\n"))
 	if err != nil {
 		log.Println("StreamMessageToExistingSession write DONE error:", err)
-		return code.AIModelFail
+		return code.CodeSuccess
 	}
 	flusher.Flush()
 
@@ -173,7 +198,7 @@ func CreateStreamSessionAndSendMessage(userName string, userQuestion string, mod
 		return "", code_
 	}
 
-	code_ = StreamMessageToExistingSession(userName, sessionID, userQuestion, modelType, writer)
+	code_ = StreamMessageToExistingSessionWithContext(ctx, userName, sessionID, userQuestion, modelType, writer)
 	if code_ != code.CodeSuccess {
 
 		return sessionID, code_
@@ -229,7 +254,7 @@ func GetChatHistory(userName string, sessionID string) ([]model.History, code.Co
 
 func ChatStreamSend(userName string, sessionID string, userQuestion string, modelType string, writer http.ResponseWriter) code.Code {
 
-	return StreamMessageToExistingSession(userName, sessionID, userQuestion, modelType, writer)
+	return StreamMessageToExistingSessionWithContext(ctx, userName, sessionID, userQuestion, modelType, writer)
 }
 
 func DeleteSession(userName string, sessionID string) code.Code {

@@ -262,16 +262,37 @@ export default {
 
 .register-card {
   width: 420px;
-  background: var(--bg-secondary) !important;
-  backdrop-filter: blur(15px);
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.05) 100%
+  ) !important;
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
   border-radius: 20px;
-  box-shadow: 0 8px 32px var(--shadow-color);
+  box-shadow: 
+    0 8px 32px 0 var(--shadow-color),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   border: 1px solid var(--border-color) !important;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   animation: slideIn 0.8s ease-out;
   position: relative;
   z-index: 1;
   overflow: hidden;
+  transform-style: preserve-3d;
+  perspective: 1000px;
+}
+
+.register-card:hover {
+  transform: scale(0.98) translateY(2px);
+  box-shadow: 
+    0 2px 10px var(--shadow-color),
+    inset 0 0 20px rgba(255, 255, 255, 0.2);
+  border-color: var(--accent-color) !important;
+}
+
+.register-card:active {
+  transform: scale(0.96) translateY(4px);
 }
 
 .register-card::before {
