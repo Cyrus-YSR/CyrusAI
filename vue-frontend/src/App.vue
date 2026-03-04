@@ -61,39 +61,52 @@ export default {
 }
 
 [data-theme="light"] {
-  /* Light Mode - Gray/White/Black */
-  --bg-primary: #ffffff;
-  --bg-secondary: #f5f7fa;
-  --bg-input: #ffffff;
-  --bg-cyber: #f0f2f5;
+  /* Pure White Liquid Glass Theme - No Blue */
   
-  --text-primary: #303133;
-  --text-secondary: #606266;
-  --text-regular: #909399;
+  /* Backgrounds - Pure White Base */
+  --bg-primary: #ffffff;
+  --bg-secondary: rgba(255, 255, 255, 0.65); /* High transparency glass */
+  --bg-input: rgba(245, 245, 245, 0.6); /* Very subtle gray for inputs */
+  --bg-cyber: #ffffff; /* Override cyber bg to white */
+  
+  /* Text - High Contrast Monochrome */
+  --text-primary: #1a1a1a; /* Near Black */
+  --text-secondary: #4a4a4a; /* Dark Gray */
+  --text-regular: #7a7a7a; /* Medium Gray */
   --text-inverse: #ffffff;
   
-  --accent-color: #303133; /* Dark Gray/Black */
-  --accent-hover: #000000;
-  --accent-dark: #000000;
+  /* Accents - Neutral Silver/Gray (No Blue) */
+  --accent-color: #4a4a4a; /* Dark Gray Accent */
+  --accent-rgb: 74, 74, 74;
+  --accent-hover: #000000; /* Black Hover */
+  --accent-dark: #2a2a2a;
   
-  --border-color: #dcdfe6;
-  --border-focus: #303133;
+  /* Borders - Glassy Highlights */
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-focus: #4a4a4a;
   
-  --scrollbar-track: #f5f7fa;
-  --scrollbar-thumb: #909399;
+  /* Scrollbars - Minimalist */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: rgba(0, 0, 0, 0.2);
   
-  --cyber-grid: rgba(0, 0, 0, 0.05);
-  --cyber-wave: rgba(0, 0, 0, 0.05);
-  --cyber-pulse: rgba(0, 0, 0, 0.03);
+  /* Effects - Clean Glass, No Grid */
+  --cyber-grid: transparent; /* Remove grid */
+  --cyber-wave: transparent; /* Remove wave */
+  --cyber-pulse: transparent; /* Remove pulse */
 
-  --shadow-color: rgba(0, 0, 0, 0.1);
-  --header-bg: rgba(255, 255, 255, 0.9);
-  --bg-glass: rgba(255, 255, 255, 0.6);
-  --bg-glass-light: rgba(0, 0, 0, 0.02);
-  --icon-hover-color: #333333;
+  --shadow-color: rgba(0, 0, 0, 0.08); /* Soft shadow */
+  --header-bg: rgba(255, 255, 255, 0.85); /* Frosted header */
+  --bg-glass: rgba(255, 255, 255, 0.75); /* Main glass pane */
+  --bg-glass-light: rgba(255, 255, 255, 0.9); /* Lighter glass */
+  --icon-hover-color: #000000;
 
   /* Element Plus Overrides */
   --el-color-primary: var(--accent-color);
+  
+  /* Liquid Glass Special Variables */
+  --glass-border: 1px solid rgba(255, 255, 255, 0.8);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
+  --glass-backdrop: blur(12px);
 }
 
 * {

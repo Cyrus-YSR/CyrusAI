@@ -164,11 +164,11 @@ export default {
 
 .menu-item {
   cursor: pointer;
-  background: var(--bg-secondary) !important;
-  backdrop-filter: blur(15px);
+  background: var(--bg-glass) !important;
+  backdrop-filter: var(--glass-backdrop);
   border-radius: 20px;
-  box-shadow: 0 8px 32px var(--shadow-color);
-  border: 1px solid var(--border-color) !important;
+  box-shadow: var(--glass-shadow);
+  border: var(--glass-border) !important;
   transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   position: relative;
   overflow: hidden;
@@ -181,15 +181,15 @@ export default {
   left: 0;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, var(--cyber-pulse) 0%, transparent 100%);
+  background: linear-gradient(135deg, rgba(var(--accent-rgb), 0.1) 0%, transparent 100%);
   opacity: 0;
   transition: opacity 0.3s;
 }
 
 .menu-item:hover {
   transform: translateY(-10px);
-  border-color: var(--accent-hover) !important;
-  box-shadow: 0 15px 40px var(--cyber-pulse);
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 15px 40px rgba(var(--accent-rgb), 0.15);
 }
 
 .menu-item:hover::before {

@@ -39,7 +39,6 @@ type (
 )
 
 func Login(c *gin.Context) {
-
 	req := new(LoginRequest)
 	res := new(LoginResponse)
 	if err := c.ShouldBindJSON(req); err != nil {
@@ -60,7 +59,6 @@ func Login(c *gin.Context) {
 }
 
 func Register(c *gin.Context) {
-
 	req := new(RegisterRequest)
 	res := new(RegisterResponse)
 	if err := c.ShouldBindJSON(req); err != nil {

@@ -749,20 +749,20 @@ export default {
   text-align: center;
   font-weight: 600;
   background: transparent;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  border-bottom: 1px solid var(--border-color);
   display: flex;
   flex-direction: column;
   gap: 16px;
   align-items: center;
-  color: #f1c40f;
+  color: var(--accent-color);
 }
 
 .new-chat-btn {
   width: 100%;
   padding: 12px 0;
   cursor: pointer;
-  background: #f1c40f;
-  color: #000;
+  background: var(--accent-color);
+  color: var(--text-inverse);
   border: none;
   border-radius: 12px;
   font-size: 14px;
@@ -770,13 +770,13 @@ export default {
   transition: all 0.3s ease;
   text-transform: uppercase;
   letter-spacing: 1px;
-  box-shadow: 0 4px 12px rgba(241, 196, 15, 0.2);
+  box-shadow: 0 4px 12px var(--glass-shadow);
 }
 
 .new-chat-btn:hover {
-  background: #f39c12;
+  background: var(--accent-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(241, 196, 15, 0.4);
+  box-shadow: 0 6px 20px var(--glass-shadow);
 }
 
 .session-list-ul {
@@ -795,17 +795,17 @@ export default {
   border-radius: 16px;
   transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   position: relative;
-  color: #aaa;
-  background: rgba(255, 255, 255, 0.02);
+  color: var(--text-regular);
+  background: var(--bg-glass-light);
   overflow: hidden;
 }
 
 /* 充能悬浮特效 */
 .session-item:hover {
-  background: rgba(241, 196, 15, 0.1);
-  color: #fff;
-  border-color: #f1c40f;
-  box-shadow: 0 0 15px rgba(241, 196, 15, 0.2), inset 0 0 10px rgba(241, 196, 15, 0.1);
+  background: rgba(var(--accent-rgb), 0.1);
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.2), inset 0 0 10px rgba(var(--accent-rgb), 0.1);
   transform: translateX(4px);
 }
 
@@ -816,7 +816,7 @@ export default {
   left: 0;
   width: 4px;
   height: 100%;
-  background: #f1c40f;
+  background: var(--accent-color);
   opacity: 0;
   transition: opacity 0.3s;
 }
@@ -826,16 +826,16 @@ export default {
 }
 
 .session-item.active {
-  background: rgba(241, 196, 15, 0.15);
-  color: #f1c40f;
+  background: rgba(var(--accent-rgb), 0.15);
+  color: var(--accent-color);
   font-weight: 600;
-  border-color: rgba(241, 196, 15, 0.5);
-  box-shadow: 0 0 20px rgba(241, 196, 15, 0.15);
+  border-color: rgba(var(--accent-rgb), 0.5);
+  box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.15);
 }
 
 .session-item.active::before {
   opacity: 1;
-  box-shadow: 0 0 10px #f1c40f;
+  box-shadow: 0 0 10px var(--accent-color);
 }
 
 .session-title {
@@ -855,8 +855,8 @@ export default {
   height: 20px;
   border-radius: 50%;
   border: none;
-  background: rgba(0, 0, 0, 0.6);
-  color: #f1c40f;
+  background: var(--bg-glass);
+  color: var(--accent-color);
   font-size: 14px;
   line-height: 20px;
   cursor: pointer;
@@ -869,8 +869,8 @@ export default {
 }
 
 .session-delete-btn:hover {
-  background: #f1c40f;
-  color: #000;
+  background: var(--accent-color);
+  color: var(--text-inverse);
   transform: translateY(-50%) scale(1.05);
 }
 
@@ -910,9 +910,9 @@ export default {
 }
 
 .back-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  color: #ddd;
+  background: var(--bg-glass-light);
+  border: 1px solid var(--border-color);
+  color: var(--text-regular);
   padding: 8px 14px;
   border-radius: 12px;
   cursor: pointer;
@@ -921,16 +921,16 @@ export default {
 }
 
 .back-btn:hover {
-  border-color: #f1c40f;
-  color: #f1c40f;
-  background: rgba(241, 196, 15, 0.1);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+  background: var(--bg-glass);
 }
 
 .sync-btn {
   background: transparent;
-  color: #f1c40f;
+  color: var(--accent-color);
   padding: 8px 14px;
-  border: 1px solid rgba(241, 196, 15, 0.5);
+  border: 1px solid rgba(var(--accent-rgb), 0.5);
   border-radius: 12px;
   cursor: pointer;
   font-size: 13px;
@@ -939,9 +939,9 @@ export default {
 }
 
 .sync-btn:hover:not(:disabled) {
-  background: #f1c40f;
-  color: #000;
-  box-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
+  background: var(--accent-color);
+  color: var(--text-inverse);
+  box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.3);
 }
 
 .sync-btn:disabled {
@@ -976,27 +976,27 @@ export default {
 
 :deep(.el-input__wrapper.is-focus),
 :deep(.el-select__wrapper.is-focused) {
-  box-shadow: 0 0 0 1px #f1c40f inset !important;
-  background-color: rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 0 0 1px var(--accent-color) inset !important;
+  background-color: var(--bg-input) !important;
 }
 
 :deep(.el-input__inner),
 :deep(.el-select__selected-item) {
-  color: #fff !important;
+  color: var(--text-primary) !important;
   font-weight: 600;
 }
 
 /* 修复选中时的蓝色字体和背景 */
 :deep(.el-select .el-input.is-focus .el-input__inner),
 :deep(.el-select__wrapper.is-focused .el-select__selected-item) {
-  color: #f1c40f !important;
+  color: var(--accent-color) !important;
 }
 
 .upload-btn {
   background: transparent;
-  color: #f1c40f;
+  color: var(--accent-color);
   padding: 8px 14px;
-  border: 1px solid rgba(241, 196, 15, 0.5);
+  border: 1px solid rgba(var(--accent-rgb), 0.5);
   border-radius: 12px;
   cursor: pointer;
   font-size: 13px;
@@ -1005,9 +1005,9 @@ export default {
 }
 
 .upload-btn:hover:not(:disabled) {
-  background: #f1c40f;
-  color: #000;
-  box-shadow: 0 0 15px rgba(241, 196, 15, 0.3);
+  background: var(--accent-color);
+  color: var(--text-inverse);
+  box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.3);
 }
 
 .chat-messages {
@@ -1095,8 +1095,8 @@ export default {
 
 :deep(.message-content code) {
   font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
-  background: rgba(241, 196, 15, 0.15); /* 黄色背景微调 */
-  color: #f1c40f;
+  background: var(--bg-glass-light);
+  color: var(--accent-color);
   padding: 2px 6px;
   border-radius: 4px;
   font-size: 0.9em;
@@ -1122,20 +1122,20 @@ export default {
 :deep(.message-content h1), :deep(.message-content h2), :deep(.message-content h3) {
   margin: 15px 0 10px 0;
   font-weight: 600;
-  color: #f1c40f;
+  color: var(--accent-color);
 }
 
 :deep(.message-content blockquote) {
   margin: 10px 0;
   padding-left: 15px;
-  border-left: 4px solid #f1c40f;
-  color: #999;
+  border-left: 4px solid var(--accent-color);
+  color: var(--text-regular);
 }
 
 :deep(.message-content a) {
-  color: #f1c40f;
+  color: var(--accent-color);
   text-decoration: none;
-  border-bottom: 1px dashed #f1c40f;
+  border-bottom: 1px dashed var(--accent-color);
 }
 
 :deep(.message-content a:hover) {
@@ -1143,8 +1143,8 @@ export default {
 }
 
 .search-results {
-  background: rgba(241, 196, 15, 0.08);
-  border: 1px solid rgba(241, 196, 15, 0.5);
+  background: var(--bg-glass-light);
+  border: 1px solid var(--accent-color);
   border-radius: 12px;
   padding: 12px 16px;
   margin: 12px 0;
@@ -1152,17 +1152,17 @@ export default {
 
 .search-results .search-title {
   font-weight: 700;
-  color: #f1c40f;
+  color: var(--accent-color);
   margin-bottom: 8px;
 }
 
 :deep(.ai-message .message-header b) {
-  color: #f1c40f;
+  color: var(--accent-color);
 }
 
 :deep(.ai-message .message-content b),
 :deep(.ai-message .message-content strong) {
-  color: #f1c40f;
+  color: var(--accent-color);
 }
 
 .message-header {
@@ -1179,13 +1179,13 @@ export default {
   border-radius: 6px;
   font-size: 12px;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.1);
-  color: #f1c40f;
+  background: var(--bg-glass-light);
+  color: var(--accent-color);
   border: none;
 }
 
 .tts-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--bg-glass);
 }
 
 /* input area */
