@@ -7,6 +7,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
+	"strconv"
+	"strings"
 
 	embeddingArk "github.com/cloudwego/eino-ext/components/embedding/ark"
 	redisIndexer "github.com/cloudwego/eino-ext/components/indexer/redis"
@@ -17,14 +20,27 @@ import (
 	redisCli "github.com/redis/go-redis/v9"
 )
 
+const (
+	defaultVectorTopK = 5
+	defaultBM25TopK   = 20
+	defaultFuseTopK   = 5
+	defaultRRFK       = 60
+)
+
 type RAGIndexer struct {
 	embedding embedding.Embedder
 	indexer   *redisIndexer.Indexer
 }
 
 type RAGQuery struct {
-	embedding embedding.Embedder
-	retriever retriever.Retriever
+	embedding  embedding.Embedder
+	retriever  retriever.Retriever
+	rdb        *redisCli.Client
+	indexName  string
+	vectorTopK int
+	bm25TopK   int
+	fuseTopK   int
+	rrfK       int
 }
 
 // 构建知识库索引器
@@ -234,18 +250,35 @@ func NewRAGQuery(ctx context.Context, username string) (*RAGQuery, error) {
 	}
 
 	return &RAGQuery{
-		embedding: embedder,
-		retriever: rtr,
+		embedding:  embedder,
+		retriever:  rtr,
+		rdb:        rdb,
+		indexName:  indexName,
+		vectorTopK: defaultVectorTopK,
+		bm25TopK:   defaultBM25TopK,
+		fuseTopK:   defaultFuseTopK,
+		rrfK:       defaultRRFK,
 	}, nil
 }
 
 // RetrieveDocuments 检索相关文档
 func (r *RAGQuery) RetrieveDocuments(ctx context.Context, query string) ([]*schema.Document, error) {
-	docs, err := r.retriever.Retrieve(ctx, query)
-	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve documents: %w", err)
+	vectorDocs, vecErr := r.retriever.Retrieve(ctx, query)
+	bm25Docs, bm25Err := r.retrieveBM25(ctx, query, r.bm25TopK)
+
+	if vecErr != nil && bm25Err != nil {
+		return nil, fmt.Errorf("failed to retrieve documents: vector=%v bm25=%v", vecErr, bm25Err)
 	}
-	return docs, nil
+
+	fused := fuseByRRF(vectorDocs, bm25Docs, r.fuseTopK, r.rrfK)
+	if len(fused) > 0 {
+		return fused, nil
+	}
+
+	if vecErr == nil {
+		return vectorDocs, nil
+	}
+	return bm25Docs, nil
 }
 
 // BuildRAGPrompt 构建包含检索文档的提示
@@ -269,4 +302,193 @@ func BuildRAGPrompt(query string, docs []*schema.Document) string {
 请提供准确、完整的回答：`, contextText, query)
 
 	return prompt
+}
+
+func (r *RAGQuery) retrieveBM25(ctx context.Context, query string, topK int) ([]*schema.Document, error) {
+	if r.rdb == nil {
+		return nil, fmt.Errorf("redis client is nil")
+	}
+	if topK <= 0 {
+		return []*schema.Document{}, nil
+	}
+
+	q := strings.TrimSpace(query)
+	if q == "" {
+		q = "*"
+	} else {
+		q = escapeRediSearchQuery(q)
+	}
+
+	args := []interface{}{
+		"FT.SEARCH", r.indexName, q,
+		"WITHSCORES",
+		"LIMIT", "0", strconv.Itoa(topK),
+		"RETURN", "2", "content", "metadata",
+		"DIALECT", "2",
+	}
+
+	raw, err := r.rdb.Do(ctx, args...).Result()
+	if err != nil {
+		return nil, err
+	}
+	return parseFTSearchResult(raw)
+}
+
+func escapeRediSearchQuery(q string) string {
+	var b strings.Builder
+	b.Grow(len(q) + 8)
+	for _, ch := range q {
+		switch ch {
+		case '\\', '-', '[', ']', '{', '}', '(', ')', '<', '>', '~', '*', '"', '\'', ':', ';', '!', '?', '@', '|', '&', '=', '+', '%', ',':
+			b.WriteByte('\\')
+			b.WriteRune(ch)
+		default:
+			b.WriteRune(ch)
+		}
+	}
+	return b.String()
+}
+
+func parseFTSearchResult(raw interface{}) ([]*schema.Document, error) {
+	arr, ok := raw.([]interface{})
+	if !ok || len(arr) < 1 {
+		return []*schema.Document{}, nil
+	}
+
+	docs := make([]*schema.Document, 0, max(0, (len(arr)-1)/2))
+
+	i := 1
+	for i < len(arr) {
+		docID, ok := toString(arr[i])
+		if !ok {
+			return nil, fmt.Errorf("invalid FT.SEARCH response doc id at %d", i)
+		}
+		i++
+
+		var scoreStr string
+		if i < len(arr) {
+			if s, ok := toString(arr[i]); ok {
+				scoreStr = s
+				i++
+			}
+		}
+
+		if i >= len(arr) {
+			break
+		}
+
+		fieldsArr, ok := arr[i].([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("invalid FT.SEARCH response fields at %d", i)
+		}
+		i++
+
+		var content string
+		meta := map[string]any{}
+		if scoreStr != "" {
+			if v, err := strconv.ParseFloat(scoreStr, 64); err == nil {
+				meta["bm25_score"] = v
+			} else {
+				meta["bm25_score_raw"] = scoreStr
+			}
+		}
+
+		for j := 0; j+1 < len(fieldsArr); j += 2 {
+			k, ok := toString(fieldsArr[j])
+			if !ok {
+				continue
+			}
+			v, _ := toString(fieldsArr[j+1])
+			if k == "content" {
+				content = v
+			} else {
+				meta[k] = v
+			}
+		}
+
+		docs = append(docs, &schema.Document{
+			ID:       docID,
+			Content:  content,
+			MetaData: meta,
+		})
+	}
+
+	return docs, nil
+}
+
+func toString(v interface{}) (string, bool) {
+	switch t := v.(type) {
+	case string:
+		return t, true
+	case []byte:
+		return string(t), true
+	default:
+		return "", false
+	}
+}
+
+func fuseByRRF(vectorDocs, bm25Docs []*schema.Document, topK int, rrfK int) []*schema.Document {
+	if topK <= 0 {
+		return []*schema.Document{}
+	}
+	if rrfK <= 0 {
+		rrfK = defaultRRFK
+	}
+
+	type agg struct {
+		doc   *schema.Document
+		score float64
+	}
+	byID := map[string]*agg{}
+
+	add := func(d *schema.Document, rank int) {
+		if d == nil || d.ID == "" {
+			return
+		}
+		a := byID[d.ID]
+		if a == nil {
+			a = &agg{doc: d}
+			byID[d.ID] = a
+		}
+		a.score += 1.0 / float64(rrfK+rank)
+	}
+
+	for i, d := range vectorDocs {
+		add(d, i+1)
+	}
+	for i, d := range bm25Docs {
+		add(d, i+1)
+	}
+
+	all := make([]*agg, 0, len(byID))
+	for _, a := range byID {
+		all = append(all, a)
+	}
+	sort.Slice(all, func(i, j int) bool {
+		if all[i].score == all[j].score {
+			return all[i].doc.ID < all[j].doc.ID
+		}
+		return all[i].score > all[j].score
+	})
+
+	if len(all) > topK {
+		all = all[:topK]
+	}
+
+	out := make([]*schema.Document, 0, len(all))
+	for _, a := range all {
+		if a.doc.MetaData == nil {
+			a.doc.MetaData = map[string]any{}
+		}
+		a.doc.MetaData["rrf_score"] = a.score
+		out = append(out, a.doc)
+	}
+	return out
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
 }
