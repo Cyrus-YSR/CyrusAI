@@ -56,57 +56,63 @@ export default {
   --bg-glass-light: rgba(255, 255, 255, 0.02);
   --icon-hover-color: #ffffff;
   
+  /* Card Background Gradient for Login/Register (Dark Mode) */
+  --card-bg-gradient: linear-gradient(135deg, rgba(30, 30, 30, 0.8) 0%, rgba(10, 10, 10, 0.6) 100%);
+
   /* Element Plus Overrides */
   --el-color-primary: var(--accent-color);
 }
 
 [data-theme="light"] {
-  /* Pure White Liquid Glass Theme - No Blue */
+  /* Pure White & Light Gray Theme */
   
-  /* Backgrounds - Pure White Base */
-  --bg-primary: #ffffff;
-  --bg-secondary: rgba(255, 255, 255, 0.65); /* High transparency glass */
-  --bg-input: rgba(245, 245, 245, 0.6); /* Very subtle gray for inputs */
-  --bg-cyber: #ffffff; /* Override cyber bg to white */
+  /* Backgrounds - Light Gray Base */
+  --bg-primary: #F5F7FA; /* 浅灰色背景 */
+  --bg-secondary: #FFFFFF; /* 纯白色主体 */
+  --bg-input: #F5F7FA; /* Input matches background */
+  --bg-cyber: #F5F7FA; /* Override cyber bg */
   
-  /* Text - High Contrast Monochrome */
-  --text-primary: #1a1a1a; /* Near Black */
-  --text-secondary: #4a4a4a; /* Dark Gray */
-  --text-regular: #7a7a7a; /* Medium Gray */
+  /* Text - High Contrast */
+  --text-primary: #333333; /* Dark Gray Text */
+  --text-secondary: #666666;
+  --text-regular: #999999;
   --text-inverse: #ffffff;
   
-  /* Accents - Neutral Silver/Gray (No Blue) */
-  --accent-color: #4a4a4a; /* Dark Gray Accent */
-  --accent-rgb: 74, 74, 74;
-  --accent-hover: #000000; /* Black Hover */
-  --accent-dark: #2a2a2a;
+  /* Accents - Black/Gray */
+  --accent-color: #000000; /* Pure Black */
+  --accent-rgb: 0, 0, 0;
+  --accent-hover: #333333;
+  --accent-dark: #000000;
   
-  /* Borders - Glassy Highlights */
-  --border-color: rgba(0, 0, 0, 0.08);
-  --border-focus: #4a4a4a;
+  /* Borders */
+  --border-color: #EBEEF5;
+  --border-focus: #000000;
   
-  /* Scrollbars - Minimalist */
+  /* Scrollbars */
   --scrollbar-track: transparent;
-  --scrollbar-thumb: rgba(0, 0, 0, 0.2);
+  --scrollbar-thumb: #C0C4CC;
   
-  /* Effects - Clean Glass, No Grid */
-  --cyber-grid: transparent; /* Remove grid */
-  --cyber-wave: transparent; /* Remove wave */
-  --cyber-pulse: transparent; /* Remove pulse */
+  /* Effects */
+  --cyber-grid: transparent;
+  --cyber-wave: transparent;
+  --cyber-pulse: transparent;
 
-  --shadow-color: rgba(0, 0, 0, 0.08); /* Soft shadow */
-  --header-bg: rgba(255, 255, 255, 0.85); /* Frosted header */
-  --bg-glass: rgba(255, 255, 255, 0.75); /* Main glass pane */
-  --bg-glass-light: rgba(255, 255, 255, 0.9); /* Lighter glass */
+  --shadow-color: rgba(0, 0, 0, 0.05); /* Very soft shadow */
+  --header-bg: rgba(255, 255, 255, 0.95);
+  --bg-glass: rgba(255, 255, 255, 0.95);
+  --bg-glass-light: #FFFFFF;
   --icon-hover-color: #000000;
 
+  /* Card Background Gradient for Login/Register (Light Mode) */
+  --card-bg-gradient: linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%);
+ 
   /* Element Plus Overrides */
   --el-color-primary: var(--accent-color);
   
   /* Liquid Glass Special Variables */
-  --glass-border: 1px solid rgba(255, 255, 255, 0.8);
-  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.05);
-  --glass-backdrop: blur(12px);
+  --glass-border: 1px solid #EBEEF5;
+  --glass-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
+  --glass-backdrop: blur(10px);
 }
 
 * {

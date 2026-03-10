@@ -262,11 +262,7 @@ export default {
 
 .register-card {
   width: 420px;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.4) 0%,
-    rgba(255, 255, 255, 0.05) 100%
-  ) !important;
+  background: var(--card-bg-gradient) !important;
   backdrop-filter: blur(25px);
   -webkit-backdrop-filter: blur(25px);
   border-radius: 20px;
