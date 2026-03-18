@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"GopherAI/common/code"
@@ -42,7 +43,8 @@ type (
 	}
 
 	GoogleLoginRequest struct {
-		Credential string `json:"credential" binding:"required"`
+		Credential    string `json:"credential" binding:"required"`
+		IsAccessToken bool   `json:"is_access_token"`
 	}
 
 	GoogleLoginResponse struct {
@@ -119,18 +121,44 @@ func GoogleLogin(c *gin.Context) {
 		return
 	}
 
-	// 验证 Google token
-	// 从配置文件中读取 Google Client ID
-	clientID := config.GetConfig().GoogleClientID
-	payload, err := idtoken.Validate(context.Background(), req.Credential, clientID)
-	if err != nil {
-		// 这里验证失败通常是凭证无效
-		c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
-		return
-	}
+	var email, name string
 
-	email := payload.Claims["email"].(string)
-	name, _ := payload.Claims["name"].(string)
+	if req.IsAccessToken {
+		// Use access token to get user info
+		reqURL := "https://www.googleapis.com/oauth2/v3/userinfo"
+		httpReq, _ := http.NewRequest("GET", reqURL, nil)
+		httpReq.Header.Set("Authorization", "Bearer "+req.Credential)
+
+		client := &http.Client{}
+		resp, err := client.Do(httpReq)
+		if err != nil || resp.StatusCode != http.StatusOK {
+			c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+			return
+		}
+		defer resp.Body.Close()
+
+		var userInfo struct {
+			Email string `json:"email"`
+			Name  string `json:"name"`
+		}
+		importJson := json.NewDecoder(resp.Body)
+		if err := importJson.Decode(&userInfo); err != nil {
+			c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+			return
+		}
+		email = userInfo.Email
+		name = userInfo.Name
+	} else {
+		// Validate Google ID token
+		clientID := config.GetConfig().GoogleClientID
+		payload, err := idtoken.Validate(context.Background(), req.Credential, clientID)
+		if err != nil {
+			c.JSON(http.StatusOK, res.CodeOf(code.CodeInvalidParams))
+			return
+		}
+		email = payload.Claims["email"].(string)
+		name, _ = payload.Claims["name"].(string)
+	}
 
 	token, code_ := user.GoogleLogin(email, name)
 	if code_ != code.CodeSuccess {

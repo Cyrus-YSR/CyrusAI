@@ -71,16 +71,26 @@
           </div>
 
           <div class="form-actions">
-            <el-button
-              type="primary"
-              :loading="loading"
-              @click="handleLogin"
+            <InteractiveHoverButton
+              type="submit"
+              :text="loading ? 'Signing in...' : 'Log in'"
+              :disabled="loading"
               class="submit-btn"
-            >
-              Log in
-            </el-button>
-            <div class="google-btn-wrapper">
-              <GoogleLogin :callback="handleGoogleLogin" />
+              @click="handleLogin"
+            />
+            <div style="margin-top: 16px;">
+              <InteractiveHoverButton
+                type="button"
+                text="Log in with Google"
+                class="google-btn"
+                @click="handleGoogleLogin"
+              >
+                <template #icon>
+                  <svg style="width: 20px; height: 20px;" aria-hidden="true" focusable="false" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 488 512">
+                    <path fill="currentColor" d="M488 261.8C488 403.3 391.1 504 248 504 110.8 504 0 393.2 0 256S110.8 8 248 8c66.8 0 126 23.4 172.9 61.9l-76.2 76.2C322.3 113.2 289.4 96 248 96c-88.8 0-160.1 71.9-160.1 160.1s71.3 160.1 160.1 160.1c98.2 0 135-70.4 140.8-106.9H248v-85.3h236.1c2.3 12.7 3.9 26.9 3.9 41.4z"></path>
+                  </svg>
+                </template>
+              </InteractiveHoverButton>
             </div>
           </div>
           
@@ -107,15 +117,16 @@ import { ElMessage } from 'element-plus'
 import { View, Hide } from '@element-plus/icons-vue'
 import api from '../utils/api'
 import AnimatedCharacters from '../components/AnimatedCharacters.vue'
-import { GoogleLogin } from 'vue3-google-login'
+import InteractiveHoverButton from '../components/InteractiveHoverButton.vue'
+import { googleTokenLogin } from 'vue3-google-login'
 
 export default {
   name: 'LoginView',
   components: {
     AnimatedCharacters,
+    InteractiveHoverButton,
     View,
-    Hide,
-    GoogleLogin
+    Hide
   },
   setup() {
     const router = useRouter()
@@ -163,13 +174,19 @@ export default {
       }
     }
 
-    const handleGoogleLogin = async (response) => {
+    const handleGoogleLogin = async () => {
       try {
         loading.value = true
+        const response = await googleTokenLogin()
+        if (!response.access_token) {
+          throw new Error('No access token received')
+        }
+        
         // api 的 baseURL 已经配置为 /api，vue.config.js 中代理会将 /api 重写为 /api/v1
         // 所以这里应该请求 /user/google-login，最终会被代理为 /api/v1/user/google-login
         const res = await api.post('/user/google-login', {
-          credential: response.credential
+          credential: response.access_token,
+          is_access_token: true
         })
         if (res.data.status_code === 1000) {
           localStorage.setItem('token', res.data.token)
@@ -351,37 +368,8 @@ export default {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  margin-top: 8px;
   margin-bottom: 32px;
-}
-
-.submit-btn, .google-btn {
-  width: 100%;
-  height: 48px;
-  font-size: 1rem;
-  font-weight: 600;
-  border-radius: 24px !important;
-  transition: all 0.2s ease;
-}
-
-.submit-btn {
-  background: #ffffff !important;
-  color: #111827 !important;
-  border: 1px solid #e5e7eb !important;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05) !important;
-}
-
-.submit-btn:hover {
-  background: #f9fafb !important;
-}
-
-.google-btn-wrapper {
-  display: flex;
-  justify-content: center;
-  width: 100%;
-}
-
-.google-btn-wrapper > div {
-  width: 100%;
 }
 
 .form-footer {
