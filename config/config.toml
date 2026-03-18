@@ -2,6 +2,7 @@
 appName = "GopherAI"
 host = "0.0.0.0"
 port = 9090
+googleClientID = "861655525550-aceltavarqe7bfcj7ne11hodpn816icc.apps.googleusercontent.com"
 
 [emailConfig]
 authcode = "njzrsyvaxuqidfhf"
