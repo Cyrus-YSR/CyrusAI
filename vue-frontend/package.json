@@ -14,7 +14,8 @@
     "highlight.js": "^11.9.0",
     "marked": "^12.0.0",
     "vue": "^3.2.13",
-    "vue-router": "^4.0.3"
+    "vue-router": "^4.0.3",
+    "vue3-google-login": "^2.0.37"
   },
   "devDependencies": {
     "@babel/eslint-parser": "^7.28.5",
@@ -28,7 +29,14 @@
   "eslintConfig": {
     "root": true,
     "env": {
-      "node": true
+      "node": true,
+      "vue/setup-compiler-macros": true
+    },
+    "globals": {
+      "defineProps": "readonly",
+      "defineEmits": "readonly",
+      "defineExpose": "readonly",
+      "withDefaults": "readonly"
     },
     "extends": [
       "plugin:vue/vue3-essential",

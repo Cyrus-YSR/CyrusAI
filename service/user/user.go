@@ -79,3 +79,29 @@ func SendCaptcha(email_ string) code.Code {
 
 	return code.CodeSuccess
 }
+
+func GoogleLogin(email, name string) (string, code.Code) {
+	var userInformation *model.User
+	var ok bool
+
+	// 1. 判断该邮箱用户是否存在
+	if ok, userInformation = user.IsExistUserByEmail(email); !ok {
+		// 2. 如果不存在，则进行注册
+		// Google登录用户没有密码，可以随机生成一个强密码
+		randomPassword := utils.GetRandomNumbers(16)
+		// username 需要唯一，可以通过邮箱前缀+随机数生成，或者直接使用 email
+		username := email
+
+		if userInformation, ok = user.Register(username, email, randomPassword); !ok {
+			return "", code.CodeServerBusy
+		}
+	}
+
+	// 3. 返回一个Token
+	token, err := myjwt.GenerateToken(userInformation.ID, userInformation.Username)
+	if err != nil {
+		return "", code.CodeServerBusy
+	}
+
+	return token, code.CodeSuccess
+}

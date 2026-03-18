@@ -9,12 +9,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
-
-onMounted(() => {
-  const savedTheme = localStorage.getItem('theme') || 'dark'
-  document.documentElement.setAttribute('data-theme', savedTheme)
-})
+// Theme logic removed
 </script>
 
 <script>
@@ -25,94 +20,38 @@ export default {
 
 <style>
 :root {
-  /* Dark Mode (Default) - Black/Yellow */
-  --bg-primary: #000000;
-  --bg-secondary: #1a1a1a;
-  --bg-input: #2a2a2a;
-  --bg-cyber: #050505;
+  /* CareerCompass Inspired Theme - Animated & Professional */
   
-  --text-primary: #ffffff;
-  --text-secondary: #f1c40f; /* Yellow */
-  --text-regular: #cccccc;
-  --text-inverse: #000000;
+  /* Backgrounds */
+  --bg-primary: #F0F2F5; /* Light Grayish Blue */
+  --bg-secondary: #FFFFFF;
+  --bg-input: #F9FAFB;
   
-  --accent-color: #f1c40f;
-  --accent-hover: #f39c12;
-  --accent-dark: #d4ac0d;
+  /* Text */
+  --text-primary: #1F2937; /* Gray-900 */
+  --text-secondary: #6B7280; /* Gray-500 */
+  --text-regular: #9CA3AF;
+  --text-inverse: #FFFFFF;
   
-  --border-color: #333333;
-  --border-focus: #f1c40f;
-  
-  --scrollbar-track: #1a1a1a;
-  --scrollbar-thumb: #f1c40f;
-  
-  --cyber-grid: rgba(241, 196, 15, 0.1);
-  --cyber-wave: rgba(241, 196, 15, 0.15);
-  --cyber-pulse: rgba(241, 196, 15, 0.08);
-
-  --shadow-color: rgba(0, 0, 0, 0.5);
-  --header-bg: rgba(26, 26, 26, 0.9);
-  --bg-glass: rgba(26, 26, 26, 0.6);
-  --bg-glass-light: rgba(255, 255, 255, 0.02);
-  --icon-hover-color: #ffffff;
-  
-  /* Card Background Gradient for Login/Register (Dark Mode) */
-  --card-bg-gradient: linear-gradient(135deg, rgba(30, 30, 30, 0.8) 0%, rgba(10, 10, 10, 0.6) 100%);
-
-  /* Element Plus Overrides */
-  --el-color-primary: var(--accent-color);
-}
-
-[data-theme="light"] {
-  /* Pure White & Light Gray Theme */
-  
-  /* Backgrounds - Light Gray Base */
-  --bg-primary: #F5F7FA; /* 浅灰色背景 */
-  --bg-secondary: #FFFFFF; /* 纯白色主体 */
-  --bg-input: #F5F7FA; /* Input matches background */
-  --bg-cyber: #F5F7FA; /* Override cyber bg */
-  
-  /* Text - High Contrast */
-  --text-primary: #333333; /* Dark Gray Text */
-  --text-secondary: #666666;
-  --text-regular: #999999;
-  --text-inverse: #ffffff;
-  
-  /* Accents - Black/Gray */
-  --accent-color: #000000; /* Pure Black */
-  --accent-rgb: 0, 0, 0;
-  --accent-hover: #333333;
-  --accent-dark: #000000;
+  /* Accents - Modern Indigo/Blue Gradient feel */
+  --accent-color: #4F46E5; /* Indigo-600 */
+  --accent-hover: #4338CA; /* Indigo-700 */
+  --accent-light: #E0E7FF;
   
   /* Borders */
-  --border-color: #EBEEF5;
-  --border-focus: #000000;
+  --border-color: #E5E7EB;
+  --border-focus: #4F46E5;
   
-  /* Scrollbars */
-  --scrollbar-track: transparent;
-  --scrollbar-thumb: #C0C4CC;
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --card-shadow: var(--shadow-lg);
   
-  /* Effects */
-  --cyber-grid: transparent;
-  --cyber-wave: transparent;
-  --cyber-pulse: transparent;
-
-  --shadow-color: rgba(0, 0, 0, 0.05); /* Very soft shadow */
-  --header-bg: rgba(255, 255, 255, 0.95);
-  --bg-glass: rgba(255, 255, 255, 0.95);
-  --bg-glass-light: #FFFFFF;
-  --icon-hover-color: #000000;
-
-  /* Card Background Gradient for Login/Register (Light Mode) */
-  --card-bg-gradient: linear-gradient(135deg, #FFFFFF 0%, #FFFFFF 100%);
- 
   /* Element Plus Overrides */
   --el-color-primary: var(--accent-color);
-  
-  /* Liquid Glass Special Variables */
-  --glass-border: 1px solid #EBEEF5;
-  --glass-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.05);
-  --glass-backdrop: blur(10px);
+  --el-text-color-primary: var(--text-primary);
+  --el-bg-color: var(--bg-secondary);
 }
 
 * {
@@ -123,192 +62,128 @@ export default {
 
 html, body {
   height: 100%;
-  font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background: var(--bg-primary);
   color: var(--text-primary);
-  transition: background 0.3s, color 0.3s;
+  overflow-x: hidden;
+}
+
+/* Animated Background */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: 
+    radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(236, 72, 153, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(16, 185, 129, 0.15) 0px, transparent 50%);
+  z-index: -1;
+  animation: bgAnimation 20s ease-in-out infinite alternate;
+  background-size: 200% 200%;
+}
+
+@keyframes bgAnimation {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
 }
 
 #app {
   height: 100%;
 }
 
-/* 页面切换动画 */
+/* Page Transitions */
 .page-enter-active,
 .page-leave-active {
-  transition: all 0.4s cubic-bezier(0.55, 0, 0.1, 1);
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .page-enter-from {
   opacity: 0;
-  transform: translateX(30px);
+  transform: translateY(10px);
 }
 
 .page-leave-to {
   opacity: 0;
-  transform: translateX(-30px);
+  transform: translateY(-10px);
 }
 
-/* 全局滚动条样式 */
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-  border-radius: 4px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
+  background: #D1D5DB;
   border-radius: 4px;
-  transition: background 0.3s ease;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-hover);
+  background: #9CA3AF;
 }
 
-/* 输入框自动填充深色模式修复 */
-input:-webkit-autofill,
-input:-webkit-autofill:hover,
-input:-webkit-autofill:focus,
-input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px var(--bg-input) inset !important;
-  -webkit-text-fill-color: var(--text-primary) !important;
-  transition: background-color 5000s ease-in-out 0s;
-}
-
-/* 全局动态背景动画类 */
-.cyber-bg {
-  background-color: var(--bg-cyber);
-  background-image: 
-    linear-gradient(var(--cyber-grid) 1px, transparent 1px),
-    linear-gradient(90deg, var(--cyber-grid) 1px, transparent 1px);
-  background-size: 40px 40px;
-  position: relative;
-  overflow: hidden;
-  transition: background-color 0.3s;
-}
-
-/* 扫描波浪效果 */
-.cyber-bg::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 50%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, var(--cyber-wave), transparent);
-  animation: scanWave 8s linear infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
-@keyframes scanWave {
-  0% { left: -50%; }
-  100% { left: 150%; }
-}
-
-.cyber-bg::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: radial-gradient(circle at 50% 50%, var(--cyber-pulse) 0%, transparent 60%);
-  animation: bgPulse 10s ease-in-out infinite;
-  pointer-events: none;
-}
-
-@keyframes bgPulse {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(1.2); }
-}
-
-/* Element Plus 组件样式覆盖 */
-:root {
-  --el-color-primary: var(--accent-color);
-  --el-color-primary-light-3: var(--accent-hover);
-  --el-color-primary-dark-2: var(--accent-dark);
-}
-
+/* Element Plus Overrides */
 .el-button {
-  font-weight: 600;
+  font-weight: 500;
   border-radius: 8px;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .el-button--primary {
   background-color: var(--accent-color) !important;
   border-color: var(--accent-color) !important;
   color: var(--text-inverse) !important;
+  box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.2);
 }
 
 .el-button--primary:hover {
   background-color: var(--accent-hover) !important;
   border-color: var(--accent-hover) !important;
-  color: var(--text-inverse) !important;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 8px -1px rgba(79, 70, 229, 0.3);
 }
 
-.el-button--danger {
-  background-color: var(--bg-secondary) !important;
-  border-color: var(--accent-color) !important;
-  color: var(--accent-color) !important;
-}
-
-.el-button--danger:hover {
-  background-color: var(--border-color) !important;
-  border-color: var(--accent-hover) !important;
-  color: var(--accent-hover) !important;
+.el-button--primary:active {
+  transform: translateY(0);
 }
 
 .el-input__wrapper {
   background-color: var(--bg-input) !important;
   box-shadow: 0 0 0 1px var(--border-color) inset !important;
+  border-radius: 8px !important;
+  padding: 8px 12px !important;
+  transition: all 0.2s ease !important;
 }
 
 .el-input__wrapper.is-focus {
-  box-shadow: 0 0 0 1px var(--border-focus) inset !important;
-}
-
-.el-input__inner {
-  color: var(--text-primary) !important;
+  box-shadow: 0 0 0 2px var(--accent-color) inset !important;
+  background-color: #fff !important;
 }
 
 .el-card {
   background-color: var(--bg-secondary) !important;
-  border-color: var(--border-color) !important;
+  border: 1px solid var(--border-color) !important;
   color: var(--text-primary) !important;
+  box-shadow: var(--card-shadow) !important;
+  border-radius: 16px !important;
+  overflow: visible !important; /* Allow hover effects to show */
 }
 
-.el-message {
-  background: var(--bg-secondary) !important;
-  border-color: var(--border-color) !important;
-}
-
-.el-message--success .el-message__content {
-  color: var(--accent-color) !important;
-}
-
-.el-message--error .el-message__content {
-  color: #e74c3c !important;
-}
-
-/* 响应式设计 */
+/* Responsive */
 @media (max-width: 768px) {
-  .page-enter-from,
-  .page-leave-to {
-    transform: translateX(0);
-    opacity: 0;
-  }
-
   .page-enter-active,
   .page-leave-active {
-    transition: opacity 0.3s ease;
+    transition: none;
   }
 }
 </style>

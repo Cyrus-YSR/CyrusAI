@@ -7,9 +7,10 @@ import (
 )
 
 type MainConfig struct {
-	Port    int    `toml:"port"`
-	AppName string `toml:"appName"`
-	Host    string `toml:"host"`
+	Port           int    `toml:"port"`
+	AppName        string `toml:"appName"`
+	Host           string `toml:"host"`
+	GoogleClientID string `toml:"googleClientID"`
 }
 
 type EmailConfig struct {
