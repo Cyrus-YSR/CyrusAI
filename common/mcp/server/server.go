@@ -3,11 +3,13 @@ package mcp
 import (
 	"context"
 	"encoding/json"
+	"encoding/xml"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strconv"
 	"strings"
@@ -128,8 +130,9 @@ func NewSearchAPIClient() *SearchAPIClient {
 }
 
 type SearchResult struct {
-	Title string
-	URL   string
+	Title   string
+	URL     string
+	Snippet string
 }
 
 func (c *SearchAPIClient) ddgHTMLSearch(ctx context.Context, query string, limit int) ([]SearchResult, error) {
@@ -212,9 +215,21 @@ func (c *SearchAPIClient) baiduHTMLSearch(ctx context.Context, query string, lim
 	}
 	html := string(body)
 
-	// Extract Baidu search results: <h3 class="t"><a href="...">Title</a>
-	re := regexp.MustCompile(`<h3[^>]*class="t"[^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>`)
-	matches := re.FindAllStringSubmatch(html, -1)
+	if strings.Contains(html, "百度安全验证") || strings.Contains(html, "ppui-static-wap") || strings.Contains(html, "mkdjump") {
+		return nil, fmt.Errorf("baidu verification required")
+	}
+
+	patterns := []*regexp.Regexp{
+		regexp.MustCompile(`<h3[^>]*class="t"[^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>`),
+		regexp.MustCompile(`<h3[^>]*class="[^"]*c-title[^"]*"[^>]*>\s*<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>`),
+	}
+	var matches [][]string
+	for _, re := range patterns {
+		matches = re.FindAllStringSubmatch(html, -1)
+		if len(matches) > 0 {
+			break
+		}
+	}
 	results := make([]SearchResult, 0, limit)
 	for _, m := range matches {
 		if len(m) < 3 {
@@ -233,6 +248,120 @@ func (c *SearchAPIClient) baiduHTMLSearch(ctx context.Context, query string, lim
 	return results, nil
 }
 
+func (c *SearchAPIClient) bingHTMLSearch(ctx context.Context, query string, limit int) ([]SearchResult, error) {
+	base := "https://www.bing.com/search"
+	u, err := url.Parse(base)
+	if err != nil {
+		return nil, fmt.Errorf("parse bing url failed: %w", err)
+	}
+	q := u.Query()
+	q.Set("q", query)
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("create bing request failed: %w", err)
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; MCP-Search/1.0)")
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+
+	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("bing request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("bing read failed: %w", err)
+	}
+	html := string(body)
+
+	re := regexp.MustCompile(`(?s)<li[^>]*class="b_algo"[^>]*>.*?<h2>\s*<a[^>]*href="([^"]+)"[^>]*>(.*?)</a>.*?(?:<p>(.*?)</p>)?`)
+	matches := re.FindAllStringSubmatch(html, -1)
+	results := make([]SearchResult, 0, limit)
+	for _, m := range matches {
+		if len(m) < 3 {
+			continue
+		}
+		urlStr := htmlUnescape(m[1])
+		title := stripTags(htmlUnescape(m[2]))
+		snippet := ""
+		if len(m) >= 4 {
+			snippet = stripTags(htmlUnescape(m[3]))
+			snippet = strings.TrimSpace(snippet)
+		}
+		if title == "" || urlStr == "" {
+			continue
+		}
+		results = append(results, SearchResult{Title: title, URL: urlStr, Snippet: snippet})
+		if len(results) >= limit {
+			break
+		}
+	}
+	return results, nil
+}
+
+func (c *SearchAPIClient) bingRSSSearch(ctx context.Context, query string, limit int) ([]SearchResult, error) {
+	base := "https://www.bing.com/search"
+	u, err := url.Parse(base)
+	if err != nil {
+		return nil, fmt.Errorf("parse bing url failed: %w", err)
+	}
+	q := u.Query()
+	q.Set("q", query)
+	q.Set("format", "rss")
+	u.RawQuery = q.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("create bing rss request failed: %w", err)
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; MCP-Search/1.0)")
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+
+	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("bing rss request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("bing rss read failed: %w", err)
+	}
+
+	type rss struct {
+		Channel struct {
+			Items []struct {
+				Title       string `xml:"title"`
+				Link        string `xml:"link"`
+				Description string `xml:"description"`
+			} `xml:"item"`
+		} `xml:"channel"`
+	}
+
+	var feed rss
+	if err := xml.Unmarshal(body, &feed); err != nil {
+		return nil, fmt.Errorf("bing rss parse failed: %w", err)
+	}
+
+	results := make([]SearchResult, 0, min(limit, len(feed.Channel.Items)))
+	for _, it := range feed.Channel.Items {
+		title := strings.TrimSpace(it.Title)
+		link := strings.TrimSpace(it.Link)
+		snippet := strings.TrimSpace(stripTags(it.Description))
+		if title == "" || link == "" {
+			continue
+		}
+		results = append(results, SearchResult{Title: title, URL: link, Snippet: snippet})
+		if len(results) >= limit {
+			break
+		}
+	}
+	return results, nil
+}
+
 func htmlUnescape(s string) string {
 	r := strings.NewReplacer("&amp;", "&", "&lt;", "<", "&gt;", ">", "&quot;", `"`, "&#39;", "'")
 	return r.Replace(s)
@@ -243,146 +372,67 @@ func stripTags(s string) string {
 }
 
 func (c *SearchAPIClient) Search(ctx context.Context, query string) (string, error) {
-	apiURL, err := url.Parse("https://api.duckduckgo.com/")
+	timeout := 15 * time.Second
+	if v := strings.TrimSpace(os.Getenv("MCP_SEARCH_TIMEOUT")); v != "" {
+		if d, err := time.ParseDuration(v); err == nil && d > 0 {
+			timeout = d
+		}
+	}
+	searchCtx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
+	var lastBaiduErr error
+	results, err := c.baiduHTMLSearch(searchCtx, query, 5)
+	if err == nil && len(results) > 0 {
+		return formatSearchResults(results), nil
+	}
 	if err != nil {
-		return "", fmt.Errorf("parse base url failed: %w", err)
+		lastBaiduErr = err
+	} else {
+		lastBaiduErr = fmt.Errorf("empty results")
 	}
 
-	q := apiURL.Query()
-	q.Set("q", query)
-	q.Set("format", "json")
-	q.Set("no_redirect", "1")
-	q.Set("no_html", "1")
-	apiURL.RawQuery = q.Encode()
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, apiURL.String(), nil)
+	var lastBingRSSErr error
+	results, err = c.bingRSSSearch(searchCtx, query, 5)
+	if err == nil && len(results) > 0 {
+		return formatSearchResults(results), nil
+	}
 	if err != nil {
-		return "", fmt.Errorf("create request failed: %w", err)
+		lastBingRSSErr = err
+	} else {
+		lastBingRSSErr = fmt.Errorf("empty results")
 	}
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Do(req)
+	var lastBingHTMLErr error
+	results, err = c.bingHTMLSearch(searchCtx, query, 5)
+	if err == nil && len(results) > 0 {
+		return formatSearchResults(results), nil
+	}
 	if err != nil {
-		// Fallback to HTML providers when IA fails
-		results, derr := c.ddgHTMLSearch(ctx, query, 5)
-		if derr != nil || len(results) == 0 {
-			results, berr := c.baiduHTMLSearch(ctx, query, 5)
-			if berr != nil || len(results) == 0 {
-				return "", fmt.Errorf("http request failed: %w", err)
-			}
-		}
-		var b strings.Builder
-		b.WriteString("搜索结果:\n")
-		for _, r := range results {
-			b.WriteString("- [")
-			b.WriteString(r.Title)
-			b.WriteString("](")
-			b.WriteString(r.URL)
-			b.WriteString(")\n")
-		}
-		return b.String(), nil
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("read response failed: %w", err)
+		lastBingHTMLErr = err
+	} else {
+		lastBingHTMLErr = fmt.Errorf("empty results")
 	}
 
-	var ia DDGInstantAnswer
-	if err := json.Unmarshal(body, &ia); err != nil {
-		trimmed := strings.TrimSpace(string(body))
-		if len(trimmed) > 2000 {
-			trimmed = trimmed[:2000] + "..."
-		}
-		// Fallback to HTML search parsing
-		results, err := c.ddgHTMLSearch(ctx, query, 5)
-		if err != nil || len(results) == 0 {
-			results, err = c.baiduHTMLSearch(ctx, query, 5)
-			if err != nil || len(results) == 0 {
-				return trimmed, nil
-			}
-		}
-		var b strings.Builder
-		b.WriteString("搜索结果:\n")
-		for _, r := range results {
-			b.WriteString("- [")
-			b.WriteString(r.Title)
-			b.WriteString("](")
-			b.WriteString(r.URL)
-			b.WriteString(")\n")
-		}
-		return b.String(), nil
-	}
+	return "", fmt.Errorf("search failed: baidu=%v; bing_rss=%v; bing_html=%v", lastBaiduErr, lastBingRSSErr, lastBingHTMLErr)
+}
 
+func formatSearchResults(results []SearchResult) string {
 	var b strings.Builder
-	if ia.AbstractText != "" {
-		b.WriteString("摘要:\n")
-		b.WriteString(ia.AbstractText)
-		b.WriteString("\n")
-	}
-	if ia.AbstractURL != "" {
-		b.WriteString("参考链接: [")
-		b.WriteString(ia.AbstractURL)
+	b.WriteString("搜索结果:\n")
+	for _, r := range results {
+		b.WriteString("- [")
+		b.WriteString(r.Title)
 		b.WriteString("](")
-		b.WriteString(ia.AbstractURL)
+		b.WriteString(r.URL)
 		b.WriteString(")\n")
-	}
-
-	count := 0
-	for _, t := range ia.RelatedTopics {
-		if t.Text == "" {
-			continue
-		}
-		if count == 0 {
-			if b.Len() > 0 {
-				b.WriteString("\n")
-			}
-			b.WriteString("相关结果:\n")
-		}
-		if t.FirstURL != "" {
-			b.WriteString("- [")
-			b.WriteString(t.Text)
-			b.WriteString("](")
-			b.WriteString(t.FirstURL)
-			b.WriteString(")")
-		} else {
-			b.WriteString("- ")
-			b.WriteString(t.Text)
-		}
-		b.WriteString("\n")
-		count++
-		if count >= 5 {
-			break
+		if s := strings.TrimSpace(r.Snippet); s != "" {
+			b.WriteString("  摘要: ")
+			b.WriteString(s)
+			b.WriteString("\n")
 		}
 	}
-
-	result := strings.TrimSpace(b.String())
-	if result == "" {
-		trimmed := strings.TrimSpace(string(body))
-		if len(trimmed) > 2000 {
-			trimmed = trimmed[:2000] + "..."
-		}
-		// Fallback to HTML search parsing
-		results, err := c.ddgHTMLSearch(ctx, query, 5)
-		if err != nil || len(results) == 0 {
-			results, err = c.baiduHTMLSearch(ctx, query, 5)
-			if err != nil || len(results) == 0 {
-				return trimmed, nil
-			}
-		}
-		var bb strings.Builder
-		bb.WriteString("搜索结果:\n")
-		for _, r := range results {
-			bb.WriteString("- [")
-			bb.WriteString(r.Title)
-			bb.WriteString("](")
-			bb.WriteString(r.URL)
-			bb.WriteString(")\n")
-		}
-		return bb.String(), nil
-	}
-	return result, nil
+	return b.String()
 }
 
 /*

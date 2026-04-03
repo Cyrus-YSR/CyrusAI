@@ -6,6 +6,7 @@ import (
 	"GopherAI/controller"
 	"GopherAI/service/image"
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -100,6 +101,100 @@ func AnalyzeImage(c *gin.Context) {
 		res.AnalysisText = resp.Content
 	}
 	c.JSON(http.StatusOK, res)
+}
+
+func AnalyzeImageStream(c *gin.Context) {
+	file, err := c.FormFile("image")
+	if err != nil {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	className, err := image.RecognizeImage(file)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	c.Header("Content-Type", "text/event-stream")
+	c.Header("Cache-Control", "no-cache")
+	c.Header("Connection", "keep-alive")
+
+	flusher, ok := c.Writer.(http.Flusher)
+	if !ok {
+		c.Status(http.StatusInternalServerError)
+		return
+	}
+
+	writeEvent := func(payload string) error {
+		if _, err := c.Writer.Write([]byte("data: " + payload + "\n\n")); err != nil {
+			return err
+		}
+		flusher.Flush()
+		return nil
+	}
+
+	metaPayload, _ := json.Marshal(map[string]any{
+		"type":       "meta",
+		"class_name": className,
+		"top_k": []map[string]any{
+			{"label": className, "score": 1.0},
+		},
+	})
+	if err := writeEvent(string(metaPayload)); err != nil {
+		return
+	}
+
+	username := c.GetString("userName")
+	reqCtx := c.Request.Context()
+	factory := aihelper.GetGlobalFactory()
+	model, err := factory.CreateAIModel(reqCtx, "1", map[string]interface{}{"username": username})
+	if err != nil {
+		_ = writeEvent(`{"type":"error","message":"CreateAIModel failed"}`)
+		_ = writeEvent("[DONE]")
+		return
+	}
+
+	var b strings.Builder
+	b.WriteString("你是一位严谨的图像讲解助手，请基于下方的模型识别结果，用中文做详细解析。\n")
+	b.WriteString("注意：识别结果来自通用图像分类模型，只能给出大致类别，尤其在宠物品种（例如不同猫狗品种）上不一定精确，请在回答中自然提醒用户这一点，不要声称百分之百准确。\n")
+	b.WriteString("\n模型给出的主要类别标签如下（仅供参考）：\n")
+	b.WriteString("- ")
+	b.WriteString(className)
+	b.WriteString("\n")
+	b.WriteString("\n请按照以下结构输出：\n")
+	b.WriteString("1) 整体描述（一句话概括，不要绝对化用语）；\n")
+	b.WriteString("2) 主要物体及可见特征；\n")
+	b.WriteString("3) 可能的场景或用途；\n")
+	b.WriteString("4) 风险或注意事项；\n")
+	b.WriteString("5) 结果不确定性的说明，以及必要时的延伸建议（可选）。\n")
+
+	msgs := []*schema.Message{
+		{Role: "system", Content: "你是严谨的中文图像讲解助手"},
+		{Role: "user", Content: b.String()},
+	}
+
+	cb := func(chunk string) {
+		select {
+		case <-reqCtx.Done():
+			return
+		default:
+		}
+		payload, err := json.Marshal(map[string]string{
+			"type":    "delta",
+			"content": chunk,
+		})
+		if err != nil {
+			return
+		}
+		_ = writeEvent(string(payload))
+	}
+
+	_, err = model.StreamResponse(reqCtx, msgs, cb)
+	if err != nil {
+		_ = writeEvent(`{"type":"error","message":"StreamResponse failed"}`)
+	}
+	_ = writeEvent("[DONE]")
 }
 
 func fmtFloat(f float32) string {
