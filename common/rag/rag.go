@@ -147,28 +147,65 @@ func NewRAGIndexer(filename, embeddingModel string) (*RAGIndexer, error) {
 // IndexFile 读取文件内容并创建向量索引
 func (r *RAGIndexer) IndexFile(ctx context.Context, filePath string) error {
 	// 读取文件内容
-	content, err := os.ReadFile(filePath)
+	contentBytes, err := os.ReadFile(filePath)
 	if err != nil {
 		return fmt.Errorf("failed to read file: %w", err)
 	}
 
-	// 将文件内容转换为文档
-	// TODO: 这里可以根据需要进行文本切块，目前简单处理为一个文档一个向量
-	doc := &schema.Document{
-		ID:      "doc_1", // 可以使用 UUID 或其他唯一标识
-		Content: string(content),
-		MetaData: map[string]any{
-			"source": filePath,
-		},
+	content := string(contentBytes)
+
+	// 执行文本切块（每个 chunk 约 500 字符，重叠 50 字符）
+	chunkSize := 500
+	overlap := 50
+	chunks := splitText(content, chunkSize, overlap)
+
+	// 将切块转换为多个文档
+	docs := make([]*schema.Document, 0, len(chunks))
+	for i, chunkText := range chunks {
+		docs = append(docs, &schema.Document{
+			ID:      fmt.Sprintf("doc_%d", i+1),
+			Content: chunkText,
+			MetaData: map[string]any{
+				"source":      filePath,
+				"chunk_index": i,
+			},
+		})
 	}
 
-	// 使用 indexer 存储文档（会自动进行向量化）
-	_, err = r.indexer.Store(ctx, []*schema.Document{doc})
+	// 使用 indexer 批量存储文档（会自动进行向量化）
+	_, err = r.indexer.Store(ctx, docs)
 	if err != nil {
 		return fmt.Errorf("failed to store document: %w", err)
 	}
 
 	return nil
+}
+
+// splitText 基于字符长度进行简单的文本切块，支持重叠（Overlap）
+func splitText(text string, chunkSize, overlap int) []string {
+	runes := []rune(text)
+	var chunks []string
+	length := len(runes)
+
+	if length == 0 {
+		return chunks
+	}
+
+	if chunkSize <= overlap {
+		chunkSize = overlap + 1 // 防止死循环
+	}
+
+	for i := 0; i < length; i += (chunkSize - overlap) {
+		end := i + chunkSize
+		if end > length {
+			end = length
+		}
+		chunks = append(chunks, string(runes[i:end]))
+		if end == length {
+			break
+		}
+	}
+	return chunks
 }
 
 // DeleteIndex 删除指定文件的知识库索引（静态方法，不依赖实例）

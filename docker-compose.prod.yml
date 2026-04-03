@@ -18,6 +18,7 @@ services:
       - ORT_DYLIB_PATH=/usr/lib/libonnxruntime.so
       - CGO_ENABLED=1
       - IS_DOCKER=true
+      - MCP_BASE_URL=http://gopherai-mcp-server:8081/mcp
     networks:
       - gopherai-net
     restart: always

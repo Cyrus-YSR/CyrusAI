@@ -10,4 +10,5 @@ func ImageRouter(r *gin.RouterGroup) {
 
 	r.POST("/recognize", image.RecognizeImage)
 	r.POST("/analyze", image.AnalyzeImage)
+	r.POST("/analyze-stream", image.AnalyzeImageStream)
 }

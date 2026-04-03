@@ -26,8 +26,10 @@ services:
       - ORT_DYLIB_PATH=/usr/lib/libonnxruntime.so
       - CGO_ENABLED=1
       - IS_DOCKER=true
+      - MCP_BASE_URL=http://mcp-server:8081/mcp
     networks:
       - gopherai-net
+    restart: always
 
   frontend:
     # 使用 Node 镜像进行开发，支持热重载
@@ -48,6 +50,7 @@ services:
       - IS_DOCKER=true
     networks:
       - gopherai-net
+    restart: always
 
   mysql:
     image: mysql:8.0
@@ -61,6 +64,7 @@ services:
       - mysql-data:/var/lib/mysql
     networks:
       - gopherai-net
+    restart: always
 
   redis:
     image: redis/redis-stack-server:latest
@@ -69,6 +73,7 @@ services:
       - "6379:6379"
     networks:
       - gopherai-net
+    restart: always
 
   rabbitmq:
     image: rabbitmq:3-management
@@ -82,6 +87,7 @@ services:
       - "15672:15672"
     networks:
       - gopherai-net
+    restart: always
 
   mcp-server:
     image: golang:1.25
@@ -94,6 +100,7 @@ services:
       - "8082:8081"
     networks:
       - gopherai-net
+    restart: always
 
 networks:
   gopherai-net:

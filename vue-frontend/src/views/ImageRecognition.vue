@@ -82,7 +82,6 @@
 
 <script>
 import { ref, nextTick } from 'vue'
-import api from '../utils/api'
 import LogoEye from '../components/LogoEye.vue'
 
 export default {
@@ -119,27 +118,84 @@ export default {
       formData.append('image', file)
 
       try {
-        const response = await api.post('/image/analyze', formData, {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+        const aiMessage = {
+          role: 'assistant',
+          content: '',
+          meta: { status: 'streaming' }
+        }
+        const aiMessageIndex = messages.value.length
+        messages.value.push(aiMessage)
+
+        await nextTick()
+        scrollToBottom()
+
+        const headers = {
+          'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+        }
+
+        const response = await fetch('/api/image/analyze-stream', {
+          method: 'POST',
+          headers,
+          body: formData
         })
+        if (!response.ok) throw new Error('Network response was not ok')
 
+        const reader = response.body.getReader()
+        const decoder = new TextDecoder()
+        let buffer = ''
+        let hasPrefix = false
 
-        if (response.data && response.data.class_name) {
-             let aiText = `识别结果: ${response.data.class_name}`
-             if (response.data.analysis_text) {
-                 aiText += `\n\n详细解析:\n${response.data.analysis_text}`
-             }
-            messages.value.push({
-                role: 'assistant',
-                content: aiText,
-            })
-        } else {
-             messages.value.push({
-                 role: 'assistant',
-                 content: `[错误] ${response.data.status_msg || '识别失败'}`,
-             })
+        // eslint-disable-next-line no-constant-condition
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) break
+          const chunk = decoder.decode(value, { stream: true })
+          buffer += chunk
+          const lines = buffer.split('\n')
+          buffer = lines.pop() || ''
+
+          for (const line of lines) {
+            const normalizedLine = line.endsWith('\r') ? line.slice(0, -1) : line
+            if (!normalizedLine) continue
+            if (!normalizedLine.startsWith('data:')) continue
+            let data = normalizedLine.slice(5)
+            if (data.startsWith(' ')) data = data.slice(1)
+
+            if (data === '[DONE]') {
+              messages.value[aiMessageIndex].meta = { status: 'done' }
+              continue
+            }
+
+            if (data.startsWith('{')) {
+              try {
+                const parsed = JSON.parse(data)
+                if (parsed.type === 'meta') {
+                  const cn = parsed.class_name || ''
+                  messages.value[aiMessageIndex].content = cn ? `识别结果: ${cn}` : ''
+                  hasPrefix = false
+                } else if (parsed.type === 'delta') {
+                  if (!hasPrefix) {
+                    if (messages.value[aiMessageIndex].content) {
+                      messages.value[aiMessageIndex].content += '\n\n详细解析:\n'
+                    }
+                    hasPrefix = true
+                  }
+                  messages.value[aiMessageIndex].content += parsed.content || ''
+                } else if (parsed.type === 'error') {
+                  messages.value[aiMessageIndex].meta = { status: 'error' }
+                  messages.value[aiMessageIndex].content = `[错误] ${parsed.message || '识别失败'}`
+                }
+              } catch (e) {
+                messages.value[aiMessageIndex].content += data
+              }
+            } else {
+              messages.value[aiMessageIndex].content += data
+            }
+
+            messages.value = [...messages.value]
+            await nextTick()
+            scrollToBottom()
+          }
         }
       } catch (error) {
         console.error('Upload error:', error)
