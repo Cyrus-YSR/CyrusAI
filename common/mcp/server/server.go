@@ -256,6 +256,8 @@ func (c *SearchAPIClient) bingHTMLSearch(ctx context.Context, query string, limi
 	}
 	q := u.Query()
 	q.Set("q", query)
+	q.Set("mkt", "zh-CN")
+	q.Set("setlang", "zh-hans")
 	u.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
@@ -311,6 +313,8 @@ func (c *SearchAPIClient) bingRSSSearch(ctx context.Context, query string, limit
 	q := u.Query()
 	q.Set("q", query)
 	q.Set("format", "rss")
+	q.Set("mkt", "zh-CN")
+	q.Set("setlang", "zh-hans")
 	u.RawQuery = q.Encode()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
@@ -381,40 +385,98 @@ func (c *SearchAPIClient) Search(ctx context.Context, query string) (string, err
 	searchCtx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	var lastBaiduErr error
-	results, err := c.baiduHTMLSearch(searchCtx, query, 5)
-	if err == nil && len(results) > 0 {
-		return formatSearchResults(results), nil
-	}
-	if err != nil {
-		lastBaiduErr = err
-	} else {
-		lastBaiduErr = fmt.Errorf("empty results")
+	q := strings.TrimSpace(query)
+	if q == "" {
+		return "", fmt.Errorf("query cannot be empty")
 	}
 
-	var lastBingRSSErr error
-	results, err = c.bingRSSSearch(searchCtx, query, 5)
-	if err == nil && len(results) > 0 {
-		return formatSearchResults(results), nil
-	}
+	apiURL, err := url.Parse("https://api.duckduckgo.com/")
 	if err != nil {
-		lastBingRSSErr = err
-	} else {
-		lastBingRSSErr = fmt.Errorf("empty results")
+		return "", fmt.Errorf("parse ddg ia url failed: %w", err)
+	}
+	params := apiURL.Query()
+	params.Set("q", q)
+	params.Set("format", "json")
+	params.Set("no_redirect", "1")
+	params.Set("no_html", "1")
+	apiURL.RawQuery = params.Encode()
+
+	req, err := http.NewRequestWithContext(searchCtx, http.MethodGet, apiURL.String(), nil)
+	if err != nil {
+		return "", fmt.Errorf("create ddg ia request failed: %w", err)
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; MCP-Search/1.0)")
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+
+	resp, err := (&http.Client{Timeout: 10 * time.Second}).Do(req)
+	if err != nil {
+		return "", fmt.Errorf("ddg ia request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("ddg ia read failed: %w", err)
 	}
 
-	var lastBingHTMLErr error
-	results, err = c.bingHTMLSearch(searchCtx, query, 5)
-	if err == nil && len(results) > 0 {
-		return formatSearchResults(results), nil
-	}
-	if err != nil {
-		lastBingHTMLErr = err
-	} else {
-		lastBingHTMLErr = fmt.Errorf("empty results")
+	var ia DDGInstantAnswer
+	if err := json.Unmarshal(body, &ia); err == nil {
+		var out strings.Builder
+		if strings.TrimSpace(ia.AbstractText) != "" {
+			out.WriteString("摘要:\n")
+			out.WriteString(strings.TrimSpace(ia.AbstractText))
+			out.WriteString("\n")
+		}
+		if strings.TrimSpace(ia.AbstractURL) != "" {
+			out.WriteString("参考链接: [")
+			out.WriteString(strings.TrimSpace(ia.AbstractURL))
+			out.WriteString("](")
+			out.WriteString(strings.TrimSpace(ia.AbstractURL))
+			out.WriteString(")\n")
+		}
+		count := 0
+		for _, t := range ia.RelatedTopics {
+			title := strings.TrimSpace(t.Text)
+			link := strings.TrimSpace(t.FirstURL)
+			if title == "" {
+				continue
+			}
+			if count == 0 {
+				if out.Len() > 0 {
+					out.WriteString("\n")
+				}
+				out.WriteString("相关结果:\n")
+			}
+			if link != "" {
+				out.WriteString("- [")
+				out.WriteString(title)
+				out.WriteString("](")
+				out.WriteString(link)
+				out.WriteString(")\n")
+			} else {
+				out.WriteString("- ")
+				out.WriteString(title)
+				out.WriteString("\n")
+			}
+			count++
+			if count >= 5 {
+				break
+			}
+		}
+		if result := strings.TrimSpace(out.String()); result != "" {
+			return result, nil
+		}
 	}
 
-	return "", fmt.Errorf("search failed: baidu=%v; bing_rss=%v; bing_html=%v", lastBaiduErr, lastBingRSSErr, lastBingHTMLErr)
+	results, err := c.ddgHTMLSearch(searchCtx, q, 8)
+	if err != nil {
+		return "", fmt.Errorf("duckduckgo search failed: %w", err)
+	}
+	if len(results) == 0 {
+		return "", fmt.Errorf("duckduckgo empty results")
+	}
+	results = results[:min(5, len(results))]
+	results = c.enrichResultsWithPageSnippets(searchCtx, results, 3)
+	return formatSearchResults(results), nil
 }
 
 func formatSearchResults(results []SearchResult) string {
@@ -433,6 +495,87 @@ func formatSearchResults(results []SearchResult) string {
 		}
 	}
 	return b.String()
+}
+
+func (c *SearchAPIClient) enrichResultsWithPageSnippets(ctx context.Context, results []SearchResult, maxFetch int) []SearchResult {
+	if maxFetch <= 0 || len(results) == 0 {
+		return results
+	}
+	client := &http.Client{Timeout: 6 * time.Second}
+	fetched := 0
+	for i := range results {
+		if fetched >= maxFetch {
+			break
+		}
+		if strings.TrimSpace(results[i].Snippet) != "" {
+			continue
+		}
+		snippet, err := fetchPageSnippet(ctx, client, results[i].URL)
+		if err != nil {
+			continue
+		}
+		if snippet != "" {
+			results[i].Snippet = snippet
+			fetched++
+		}
+	}
+	return results
+}
+
+func fetchPageSnippet(ctx context.Context, client *http.Client, pageURL string) (string, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, pageURL, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; MCP-Search/1.0)")
+	req.Header.Set("Accept-Language", "zh-CN,zh;q=0.9,en;q=0.8")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("status=%d", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(io.LimitReader(resp.Body, 300*1024))
+	if err != nil {
+		return "", err
+	}
+	html := string(body)
+
+	metaPatterns := []*regexp.Regexp{
+		regexp.MustCompile(`(?is)<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["'][^>]*>`),
+		regexp.MustCompile(`(?is)<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["'][^>]*>`),
+	}
+	for _, re := range metaPatterns {
+		if m := re.FindStringSubmatch(html); len(m) > 1 {
+			s := strings.TrimSpace(stripTags(htmlUnescape(m[1])))
+			if s != "" {
+				if len([]rune(s)) > 220 {
+					s = string([]rune(s)[:220]) + "..."
+				}
+				return s, nil
+			}
+		}
+	}
+
+	reScript := regexp.MustCompile(`(?is)<script[^>]*>.*?</script>`)
+	reStyle := regexp.MustCompile(`(?is)<style[^>]*>.*?</style>`)
+	text := reScript.ReplaceAllString(html, " ")
+	text = reStyle.ReplaceAllString(text, " ")
+	text = stripTags(text)
+	text = htmlUnescape(text)
+	text = strings.Join(strings.Fields(text), " ")
+	if text == "" {
+		return "", nil
+	}
+	if len([]rune(text)) > 220 {
+		text = string([]rune(text)[:220]) + "..."
+	}
+	return text, nil
 }
 
 /*

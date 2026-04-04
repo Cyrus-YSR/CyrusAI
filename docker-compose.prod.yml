@@ -18,7 +18,7 @@ services:
       - ORT_DYLIB_PATH=/usr/lib/libonnxruntime.so
       - CGO_ENABLED=1
       - IS_DOCKER=true
-      - MCP_BASE_URL=http://gopherai-mcp-server:8081/mcp
+      - MCP_BASE_URL=http://mcp-server:8081/mcp
     networks:
       - gopherai-net
     restart: always
@@ -74,10 +74,16 @@ services:
     restart: always
 
   mcp-server:
-    build:
-      context: .
-      dockerfile: Dockerfile # 这里可以考虑为 MCP 单独写一个 Dockerfile，但为了简单可以先复用或单独处理
+    image: m.daocloud.io/docker.io/library/golang:1.25
     container_name: gopherai-mcp-server
+    volumes:
+      - ./:/app
+      - go-mod-cache:/go/pkg/mod
+      - go-build-cache:/root/.cache/go-build
+    working_dir: /app
+    environment:
+      - GOPROXY=https://goproxy.cn,direct
+      - GOSUMDB=sum.golang.google.cn
     command: sh -c "cd common/mcp && go run . --mode server --http-addr :8081"
     ports:
       - "8082:8081"
@@ -91,3 +97,5 @@ networks:
 
 volumes:
   mysql-data:
+  go-mod-cache:
+  go-build-cache:
